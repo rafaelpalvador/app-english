@@ -1,0 +1,12 @@
+1
+00:00:01,000 --> 00:00:03,000
+Hola, ¿cómo estás?
+
+2
+00:00:03,500 --> 00:00:06,000
+Muy bien, gracias. Hoy hace
+un día precioso.
+
+3
+00:00:06,500 --> 00:00:09,000
+<i>Vamos a la playa esta tarde.</i>
