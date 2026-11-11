@@ -522,6 +522,8 @@ svg.ch .gs2{stop-color:var(--accent);stop-opacity:0}
 .lcard .lst{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:8px}
 .lcard .lst b{color:var(--ink);font-weight:700}
 
+.btn.rec{border-color:var(--bad);color:var(--bad);animation:recp 1.4s ease-in-out infinite}
+@keyframes recp{50%{box-shadow:0 0 0 5px color-mix(in srgb,var(--bad) 18%,transparent)}}
 /* ============ modal / toast ============ */
 .modal{position:fixed;inset:0;z-index:60;background:rgba(6,9,16,.55);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:grid;place-items:end center;padding:0;animation:fade .2s}
 @media (min-width:640px){.modal{place-items:center;padding:20px}}

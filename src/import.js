@@ -278,14 +278,15 @@ function backupModal(){
   let data='';try{data=JSON.stringify(Object.assign({app:'glosa',v:2,date:new Date().toISOString()},S));}catch(e){}
   const kb=Math.round(data.length/1024);
   setModal(`<div class="mhead"><div><div class="eyebrow">Os teus dados</div><h2 style="margin-top:6px">Cópia de segurança</h2></div><button class="ibtn" data-close aria-label="Fechar">${I('x')}</button></div>
-  <p class="muted" style="font-size:14px">Na demo, tudo fica só neste navegador. Copia a cópia e guarda-a num ficheiro .json (por exemplo, numa nota ou no teu PC) para a restaurares noutro dispositivo. Na versão real, a conta sincroniza sozinha.</p>
+  <p class="muted" style="font-size:14px">Na demo, tudo fica só neste navegador. Descarrega ou copia a cópia e guarda-a num ficheiro .json para a restaurares noutro dispositivo. Na versão real, a conta sincroniza sozinha.</p>
   <div class="field"><label for="bk-t">Cópia atual · ${kb} KB</label><textarea id="bk-t" class="inp" style="height:120px;padding:12px;font:12px/1.5 ui-monospace,Menlo,monospace" readonly>${esc(data)}</textarea></div>
-  <div class="row"><button class="btn pri" id="bk-copy">Copiar cópia</button></div>
+  <div class="row"><button class="btn pri" id="bk-copy">Copiar cópia</button>${canDownload()?'<button class="btn" id="bk-dl">Descarregar .json</button>':''}</div>
   <div class="set-sec"><h3>Restaurar</h3><p class="muted" style="font-size:13.5px">Abre um ficheiro .json ou cola a cópia abaixo. Substitui os dados atuais.</p>
   <label class="btn sm" for="bk-file" style="justify-self:start">${I('upload',16)} Abrir ficheiro .json<input type="file" id="bk-file" accept=".json,application/json,text/plain" hidden></label>
   <textarea id="bk-in" class="inp" style="height:90px;padding:12px;font:12px/1.5 ui-monospace,Menlo,monospace" placeholder="Cola aqui uma cópia…" aria-label="Cópia para restaurar"></textarea>
   <div class="row"><button class="btn" id="bk-restore">Restaurar cópia</button></div></div>`,'Cópia de segurança');
   $('#bk-copy').onclick=()=>{const ta=$('#bk-t');const fb=()=>{ta.focus();ta.select();toast('Selecionado. Copia com Ctrl+C.');};try{navigator.clipboard.writeText(ta.value).then(()=>toast('Cópia copiada','check'),fb);}catch(e){fb();}};
+  const bdl=$('#bk-dl');if(bdl)bdl.onclick=()=>saveFile('glosa-copia-'+new Date().toISOString().slice(0,10)+'.json',$('#bk-t').value);
   $('#bk-file').addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];if(f)f.text().then(t=>{$('#bk-in').value=t;toast('Ficheiro carregado. Toca em «Restaurar cópia».');});});
   $('#bk-restore').onclick=()=>restoreBackup($('#bk-in').value);
 }
@@ -294,6 +295,6 @@ function restoreBackup(txt){
   if(!o||typeof o!=='object'||!o.vocab||!o.settings||!o.days){toast('Esta cópia não tem os dados do Glosa.');return;}
   for(let i=LESSONS.length-1;i>=0;i--){if(/^(u|rev)/.test(LESSONS[i].id))LESSONS.splice(i,1);}
   const d=defaults();delete o.app;delete o.v;delete o.date;S=Object.assign(d,o);S.settings=Object.assign(defaults().settings,o.settings||{});
-  (S.imported||[]).forEach(registerImported);
+  (S.imported||[]).forEach(registerImported);applyAITranslations();
   cur=lessonById(S.last)?S.last:'t1';G=null;save();applyTheme();closeModal();go('home');toast('Cópia restaurada','check');
 }

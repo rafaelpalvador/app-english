@@ -186,9 +186,9 @@ function renderPractice(){
     body=`<div class="face" style="margin-top:0;min-height:0">
       <div class="row between"><span class="eyebrow">${isTr?(PR.daily?'Frase do dia · ':'')+'Tradução inversa':'Escreve o que ouves'}</span><span class="muted" style="font-size:12.5px">${esc(L?L.title:'')}</span></div>
       ${isTr?`<div style="font:400 clamp(24px,3.4vw,30px)/1.3 var(--f-d)">${esc(sd.pt)}</div><span class="muted" style="font-size:13px">Escreve em ${esc(langName(tl()).toLowerCase())}</span>`:`<div class="row" style="gap:12px"><button class="play" data-pr="say" style="height:56px;padding:0 22px 0 10px;font-size:15px"><span class="pc" style="width:36px;height:36px">${I('play',16)}</span>Ouvir frase</button><button class="btn sm" data-pr="slow">Devagar</button></div>`}
-      ${PR.res?'':`<form id="pr-form" class="pr-form"><textarea id="pr-in" dir="auto" lang="${tl()}" rows="3" placeholder="${isTr?'A tua tradução em inglês…':'Escreve a frase…'}" aria-label="Resposta" spellcheck="false" autocapitalize="off">${esc(PR.val)}</textarea><div class="row between"><button type="button" class="btn sm" data-pr="hint">${I('bulb',16)} Pista</button><button class="btn blue" type="submit">Verificar ${I('arrow',16)}</button></div><div id="pr-hint"></div></form>`}
+      ${PR.res?'':`<form id="pr-form" class="pr-form"><textarea id="pr-in" dir="auto" lang="${tl()}" rows="3" placeholder="${isTr?'A tua tradução em '+langName(tl()).toLowerCase()+'…':'Escreve a frase…'}" aria-label="Resposta" spellcheck="false" autocapitalize="off">${esc(PR.val)}</textarea><div class="row between"><span class="row" style="gap:8px"><button type="button" class="btn sm" data-pr="hint">${I('bulb',16)} Pista</button>${CAP.dict?`<button type="button" class="btn sm ${DICT_ON?'rec':''}" data-pr="mic" aria-pressed="${DICT_ON}">${I('mic',16)} ${DICT_ON?'A ouvir… parar':'Dizer'}</button>`:''}</span><button class="btn blue" type="submit">Verificar ${I('arrow',16)}</button></div><div id="pr-hint"></div></form>`}
       ${PR.res?(()=>{const v=verdict(PR.res.score);return`<div class="row between"><span class="verdict ${v[1]==='bad'?'bad':v[1]==='warn'?'':'ok'}" style="${v[1]==='warn'?'color:var(--warn)':''}">${I(v[1]==='bad'?'x':'check',18)} ${v[0]}</span><span class="score tnum">${PR.res.score}%</span></div>${diffHTML(PR.res)}
-        <div class="ai-card"><div class="ai-tag">${I('spark',13)} Glosa IA</div><p style="white-space:pre-line">${esc(feedback(PR.res,PR.sid))}</p><p class="muted" style="font-size:12.5px;margin-top:8px">${isTr?'Na demo comparo com a frase original, palavra a palavra. Na versão real, a IA aceita outras traduções corretas e explica cada diferença.':'Ditado comparado com a frase original, palavra a palavra.'}</p></div>
+        ${aiPracticeHTML()||`<div class="ai-card"><div class="ai-tag">${I('spark',13)} Comparação</div><p style="white-space:pre-line">${esc(feedback(PR.res,PR.sid))}</p><p class="muted" style="font-size:12.5px;margin-top:8px">${isTr?(inClaude()?'Comparação palavra a palavra com a frase original.':'Comparação palavra a palavra com a frase original. Com uma chave do Gemini, a IA aceita outras traduções corretas e explica cada diferença.'):'Ditado comparado com a frase original, palavra a palavra.'}</p></div>`}
         ${isTr?'':`<div class="fsub">${esc(sd.pt||'')}</div>`}
         <div class="row"><button class="btn sm" data-pr="say">${I('spk',16)} Ouvir original</button><button class="btn sm" data-pr="retry">Tentar outra vez</button><span class="grow"></span><button class="btn pri" data-pr="next">Outra frase ${I('arrow',16)}</button></div>`;})():''}
     </div>`;
@@ -200,7 +200,8 @@ function renderPractice(){
       <div class="rep-bar"><i id="rep-bar"></i></div>
       <div class="row between"><span class="rep-lbl" id="rep-lbl">${REP.on?(REP.stage==='repeat'?'Agora repete em voz alta':'A ouvir…'):'Pronto para começar'}</span>
       <div class="row"><button class="btn sm" data-pr="rprev" aria-label="Frase anterior">←</button><button class="play" data-pr="rtoggle"><span class="pc">${I(REP.on?'pause':'play',14)}</span>${REP.on?'Pausar':'Começar'}</button><button class="btn sm" data-pr="rnext" aria-label="Frase seguinte">→</button></div></div>
-      <p class="muted" style="font-size:12.5px">Depois de cada frase há uma pausa do tamanho da frase para a repetires. A gravação da tua voz para comparar fica para a versão real: o navegador não deixa este demo usar o microfone.</p>
+      ${CAP.dict?`<div class="row"><button class="btn sm ${DICT_ON?'rec':''}" data-pr="rrec" aria-pressed="${DICT_ON}">${I('mic',16)} ${DICT_ON?'A ouvir… parar':'Gravar a minha leitura'}</button>${REP.rec&&REP.rec.res?`<span class="verdict ${REP.rec.res.score>=75?'ok':'bad'}">${REP.rec.res.score}% igual</span>`:''}</div>${REP.rec&&REP.rec.res?`<div class="dlab">O que o microfone ouviu</div><div class="diff" dir="auto">${REP.rec.res.B.map((w,k)=>`<span class="${REP.rec.res.okB[k]?'ok':'extra'}">${esc(w)}</span>`).join(' ')||'—'}</div><p class="muted" style="font-size:12.5px">As palavras a vermelho não foram reconhecidas como na frase: repete-as devagar.</p>`:''}`:''}
+      <p class="muted" style="font-size:12.5px">Depois de cada frase há uma pausa do tamanho da frase para a repetires.${CAP.dict?' Com «Gravar a minha leitura», o microfone compara o que disseste com a frase.':inClaude()?' A gravação pelo microfone só funciona no Chrome ou na app do Claude para computador.':''}</p>
     </div>`;
   }
   $('#v-practice').innerHTML=`<div class="wrap rv-wrap">
@@ -210,10 +211,10 @@ function renderPractice(){
   const f=$('#pr-form');
   if(f){const ta=$('#pr-in');ta.addEventListener('input',()=>{PR.val=ta.value;});
     ta.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();f.requestSubmit?f.requestSubmit():f.dispatchEvent(new Event('submit'));}});
-    f.addEventListener('submit',e=>{e.preventDefault();PR.res=diff(SENT[PR.sid].en,PR.val);logDay('r',0);renderPractice();});}
+    f.addEventListener('submit',e=>{e.preventDefault();if(DICT_ON)stopDictation();PR.res=diff(SENT[PR.sid].en,PR.val);PR.ai=null;aiCheckPractice();logDay('r',0);renderPractice();});}
   const h=$('#pr-hide');if(h)h.onchange=()=>{PR.hide=h.checked;renderPractice();};
 }
-function stopRep(){REP.on=false;clearTimeout(REP.timer);try{speechSynthesis.cancel();}catch(e){}REP.stage='';}
+function stopRep(){REP.on=false;clearTimeout(REP.timer);try{speechSynthesis.cancel();}catch(e){}stopClaudeVoice();REP.stage='';}
 function repRun(){
   if(!REP.on)return;const ids=sentsOf(lessonById(cur));
   if(REP.k>=ids.length){stopRep();REP.k=0;REP.stage='done';renderPractice();toast('Chegaste ao fim do texto','check');return;}
@@ -228,12 +229,14 @@ function repRun(){
 }
 $('#v-practice').addEventListener('click',e=>{
   const b=e.target.closest('[data-pr]');if(!b)return;const a=b.dataset.pr;
-  if(a==='mode'){stopRep();PR.mode=b.dataset.v;PR.res=null;renderPractice();}
+  if(a==='mode'){stopRep();PR.mode=b.dataset.v;PR.res=null;PR.ai=null;REP.rec=null;renderPractice();}
+  else if(a==='mic'){if(DICT_ON){stopDictation();return;}startDictation(t=>{PR.val=(PR.val?PR.val.replace(/\s+$/,'')+' ':'')+t;const ta=$('#pr-in');if(ta)ta.value=PR.val;},()=>renderPractice());}
+  else if(a==='rrec'){if(DICT_ON){stopDictation();return;}const s=SENT[sentsOf(lessonById(cur))[Math.min(REP.k,sentsOf(lessonById(cur)).length-1)]];REP.rec={text:'',res:null};if(REP.on)stopRep();startDictation(t=>{REP.rec.text=(REP.rec.text+' '+t).trim();REP.rec.res=diff(s.en,REP.rec.text);renderPractice();},()=>renderPractice());renderPractice();}
   else if(a==='say')say(SENT[PR.sid].en);
   else if(a==='slow')say(SENT[PR.sid].en,{rate:.7});
   else if(a==='hint'){const ws=TOK[PR.sid].filter(t=>t.w);const k=ws.filter(t=>status(t.l)>=0&&status(t.l)<=4&&DICT[t.l]).slice(0,3);$('#pr-hint').innerHTML=`<p class="muted" style="font-size:13.5px;margin-top:8px">${ws.length} palavras. Começa por «${esc(ws[0].w)}…»${k.length?'. Usa: '+k.map(t=>'<b>'+esc(t.w)+'</b>').join(', '):''}.</p>`;}
-  else if(a==='retry'){PR.res=null;renderPractice();}
-  else if(a==='next'){const p=practicePool().filter(x=>x!==PR.sid);PR.sid=p[Math.floor(Math.random()*p.length)]||PR.sid;PR.res=null;PR.val='';PR.daily=false;renderPractice();if(PR.mode==='dict')setTimeout(()=>say(SENT[PR.sid].en),200);}
+  else if(a==='retry'){PR.res=null;PR.ai=null;renderPractice();}
+  else if(a==='next'){const p=practicePool().filter(x=>x!==PR.sid);PR.sid=p[Math.floor(Math.random()*p.length)]||PR.sid;PR.res=null;PR.ai=null;PR.val='';PR.daily=false;renderPractice();if(PR.mode==='dict')setTimeout(()=>say(SENT[PR.sid].en),200);}
   else if(a==='rtoggle'){if(REP.on){stopRep();renderPractice();}else{REP.on=true;repRun();}}
   else if(a==='rnext'||a==='rprev'){const n=sentsOf(lessonById(cur)).length;const was=REP.on;stopRep();REP.k=Math.max(0,Math.min(n-1,REP.k+(a==='rnext'?1:-1)));if(was){REP.on=true;repRun();}else renderPractice();}
 });

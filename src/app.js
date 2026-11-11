@@ -122,7 +122,7 @@ S.imported.forEach(registerImported);
 /* ---------- palavras ---------- */
 function status(l){const v=S.vocab[l];if(v)return v.st;return isBasic(l)?5:0;}
 function stc(l){const s=status(l);return s===5?'k':s===-1?'i':String(s);}
-function info(l){const v=S.vocab[l];if(v&&v.phrase)return{pt:v.pt,pos:'expressão',ipa:null,ai:null};
+function infoBase(l){const v=S.vocab[l];if(v&&v.phrase)return{pt:v.pt,pos:'expressão',ipa:null,ai:null};
   if(l.charAt(0)==='@'){const k=l.indexOf(':'),lg=l.slice(1,k),w=l.slice(k+1);const dd=DICTX[lg]&&DICTX[lg][w];return{pt:dd?dd.pt:(BASICX[lg]&&BASICX[lg][w])||null,pos:dd&&dd.pos,ipa:dd&&dd.ipa,ai:dd&&dd.ai};}
   return entry(l);}
 function tl(){return S.settings.lang||'en';}
@@ -411,17 +411,17 @@ function chatHTML(){
   if(!G.chat.length)return'';
   return G.chat.map((m,k)=>{
     if(m.me)return`<div class="ai-q">${esc(m.me)}</div>`;
-    if(m.state==='load')return`<div class="ai-card" aria-busy="true"><div class="ai-tag">${I('spark',14)} Glosa IA a pensar</div><div style="display:grid;gap:8px"><div class="skel" style="width:94%"></div><div class="skel" style="width:80%"></div><div class="skel" style="width:58%"></div></div></div>`;
-    const txt=m.state==='type'?`<p style="white-space:pre-line"><span id="ai-typing">${esc(m.ai.slice(0,m.n))}</span><span class="caret"></span></p>`:m.ai.split('\n\n').map(p=>`<p style="white-space:pre-line">${esc(p)}</p>`).join('');
-    return`<div class="ai-card"><div class="ai-tag">${I('spark',14)} Glosa IA${m.cached?' · da cache':''}</div>${txt}</div>`;
+    if(m.state==='load')return`<div class="ai-card" aria-busy="true"><div class="ai-tag">${I('spark',14)} ${aiLabel(m.src)} a pensar</div><div style="display:grid;gap:8px"><div class="skel" style="width:94%"></div><div class="skel" style="width:80%"></div><div class="skel" style="width:58%"></div></div></div>`;
+    const txt=(m.state==='type'||m.state==='stream')?`<p style="white-space:pre-line"><span id="ai-typing">${esc(m.ai.slice(0,m.n))}</span><span class="caret"></span></p>`:m.ai.split('\n\n').map(p=>`<p style="white-space:pre-line">${esc(p)}</p>`).join('');
+    return`<div class="ai-card"><div class="ai-tag">${I('spark',14)} ${aiLabel(m.src)}${m.cached?' · guardado':''}</div>${txt}</div>`;
   }).join('');
 }
 function chipsHTML(){
-  const busy=G.chat.some(m=>m.state==='load'||m.state==='type');if(busy)return'';
+  const busy=G.chat.some(m=>m.state==='load'||m.state==='type'||m.state==='stream');if(busy)return'';
   const list=G.kind==='word'?[['ex','Outro exemplo'],['pron','Pronúncia'],['fam','Formas da palavra'],['where','Onde aparece']]:[['words','Palavras desta frase'],['slow','Ouvir devagar']];
   return`<div class="chips">${list.map(c=>`<button data-g="fu" data-v="${c[0]}">${c[1]}</button>`).join('')}</div>
   <form class="ask" id="g-ask"><input id="g-ask-in" type="text" placeholder="Pergunta algo sobre esta ${G.kind==='word'?'palavra':'frase'}…" aria-label="Pergunta à IA" autocomplete="off"><button class="btn xs blue" type="submit" aria-label="Enviar">${I('send',16)}</button></form>
-  <p class="muted" style="font-size:12px">Demo: respostas pré-escritas. Na versão real vêm do modelo escolhido (Gemini, Groq ou a tua chave) e ficam em cache.</p>`;
+  ${aiProvider()?`<p class="muted" style="font-size:12px">Respostas de ${aiLabel(aiProvider())}, guardadas para não repetir pedidos. Podem conter erros.</p>`:`<p class="muted" style="font-size:12px">Respostas de exemplo. ${inClaude()?'A IA do Claude liga-se sozinha quando estiver disponível.':'Para respostas reais, adiciona uma chave grátis do Gemini em Definições → IA e voz.'}</p>`}`;
 }
 function tabsHTML(){
   const t=[['mean','Contexto','eye'],['ai','Explicar com IA','spark']];if(G.kind==='word')t.push(['note','Nota','note']);
@@ -441,12 +441,12 @@ function renderGloss(){
     <div class="row" style="flex-wrap:nowrap;gap:6px"><button class="ibtn" data-g="say-w" aria-label="Ouvir palavra">${I('spk')}</button><button class="ibtn g-x" data-g="close" aria-label="Fechar">${I('x')}</button></div></div>
     <div class="g-sub">${e.ipa?`<span class="ipa">${esc(e.ipa)}</span>`:''}${e.pos?`<span class="pill p-i">${esc(e.pos)}</span>`:''}${label(l)!==lowerL(tk.w,tl())?`<span>forma de <b style="color:var(--ink)">${esc(label(l))}</b></span>`:''}</div>
     ${(S.settings.native||'pt').indexOf('pt')!==0&&e.pt?`<div class="muted" style="font-size:12px;margin-top:12px">Demo: tradução em português. Na versão real vem em ${esc(langName(S.settings.native).toLowerCase())}.</div>`:''}
-    <div class="g-tr">${e.pt?esc(e.pt):'<span class="muted" style="font:400 15px/1.5 var(--f-u)">Sem entrada na demo. Na versão real, a tradução vem do motor (DeepL, Argos…) e fica em cache.</span>'}</div>
+    <div class="g-tr">${e.pt?esc(e.pt):noEntryHTML(tk.l,G.sid,G.i)}</div>
     ${x?`<div class="g-expr"><div><b>Expressão:</b> ${esc(x.w.join(' '))} <span class="muted">=</span> ${esc(x.pt)}</div><div class="row" style="gap:6px"><button class="btn xs" data-g="xsel">Ver a expressão</button><button class="btn xs" data-g="xsave">${I('plus',14)} Guardar como cartão</button></div></div>`:''}
     ${tabsHTML()}`;
     if(G.tab==='mean'){
       const n=lessonLemmas(cur)[l]?sentsOf(lessonById(cur)).reduce((a,sid)=>a+TOK[sid].filter(t=>t.w&&t.l===l).length,0):0;
-      h+=`<div class="g-ctx" dir="auto">${sentMark(G.sid,G.i,G.i)}${G.tr?`<span class="tr">${sd.pt?esc(sd.pt):'Sem tradução na demo.'}</span>`:''}</div>
+      h+=`<div class="g-ctx" dir="auto">${sentMark(G.sid,G.i,G.i)}${G.tr?`<span class="tr">${sd.pt?esc(sd.pt):sentTrHTML(G.sid,true)}</span>`:''}</div>
       <div class="g-row"><button class="btn xs" data-g="trs">${I('tr',15)} ${G.tr?'Esconder tradução':'Traduzir frase'}</button><button class="btn xs" data-g="say-s">${I('spk',15)} Ouvir frase</button><button class="btn xs" data-g="say-slow">Devagar</button></div>
       <p class="muted" style="font-size:12.5px;margin-top:12px">${n>1?`Aparece ${n} vezes neste texto.`:'Aparece uma vez neste texto.'}${v&&v.srs&&s>=1&&s<=4?` Próxima revisão ${v.srs.due<=TD()?'hoje':'em '+(v.srs.due-TD())+' d'}.`:''}</p>`;
     }else if(G.tab==='ai'){h+=`<div class="ai">${chatHTML()}${chipsHTML()}</div>`;}
@@ -457,7 +457,7 @@ function renderGloss(){
   }else if(G.kind==='sent'){
     h+=`<div class="g-band" style="background:var(--accent)"></div><div class="row between" style="flex-wrap:nowrap;align-items:flex-start"><div class="eyebrow">Frase</div><div class="row" style="flex-wrap:nowrap;gap:6px"><button class="ibtn" data-g="say-s" aria-label="Ouvir frase">${I('spk')}</button><button class="ibtn g-x" data-g="close" aria-label="Fechar">${I('x')}</button></div></div>
     <div dir="auto" style="font:400 21px/1.55 var(--f-r);margin-top:8px">${esc(sd.en)}</div>
-    <div class="g-tr" style="font-size:21px">${sd.pt?esc(sd.pt):'<span class="muted" style="font:400 15px/1.5 var(--f-u)">Sem tradução na demo. Na versão real vem do motor de tradução.</span>'}</div>${tabsHTML()}`;
+    <div class="g-tr" style="font-size:21px">${sd.pt?esc(sd.pt):sentTrHTML(G.sid,false)}</div>${tabsHTML()}`;
     if(G.tab==='mean'){
       const ws={};TOK[G.sid].forEach(t=>{if(t.w){const s=status(t.l);if(s>=0&&s<=4)ws[t.l]=t.w;}});
       const keys=Object.keys(ws);
@@ -472,7 +472,7 @@ function renderGloss(){
     <div class="g-row"><button class="btn sm ${saved?'':'pri'}" data-g="psave" ${saved?'disabled':''}>${I(saved?'check':'plus',16)} ${saved?'Já tens este cartão':'Guardar como cartão'}</button></div>`;
   }
   el.innerHTML=h;
-  const ask=$('#g-ask');if(ask)ask.addEventListener('submit',ev=>{ev.preventDefault();const q=$('#g-ask-in').value.trim();if(q)runAI(askReply(q),q);});
+  const ask=$('#g-ask');if(ask)ask.addEventListener('submit',ev=>{ev.preventDefault();const q=$('#g-ask-in').value.trim();if(q){if(aiProvider())realAI(pAsk(q),q);else runAI(askReply(q),q);}});
   const note=$('#g-note');if(note)note.addEventListener('input',()=>{const l=TOK[G.sid][G.i].l;const o=S.vocab[l]||(S.vocab[l]={st:status(l)});o.note=note.value;save();});
 }
 /* IA (pré-escrita) */
@@ -505,7 +505,7 @@ function aiFollow(k){
   return'';
 }
 function askReply(q){const s=SENT[G.sid].en;return`Recebi a pergunta. Nesta demo as respostas são pré-escritas, por isso não consigo responder a perguntas livres.\n\nNa versão real, a pergunta segue para o modelo junto com a frase «${s}» e o parágrafo, e a resposta aparece aqui.`;}
-function startAI(){if(!G.chat.length){const key=(G.kind==='word'?TOK[G.sid][G.i].l:'S')+'|'+G.sid;runAI(aiMain(),null,key);}}
+function startAI(){if(!G.chat.length){const key=(G.kind==='word'?TOK[G.sid][G.i].l:'S')+'|'+G.sid;if(aiProvider())realAI(G.kind==='word'?pWordExplain():pSentExplain(),null,'ai:'+(S.settings.native||'pt')+':'+key);else runAI(aiMain(),null,key);}}
 function runAI(text,q,key){
   const g=G;if(q)g.chat.push({me:q});
   const cached=key&&AIC[key];const m={ai:text,state:'load',n:0,cached:!!cached};g.chat.push(m);renderGloss();scrollGloss();
@@ -530,7 +530,7 @@ function glossAct(a,b){
   if(a==='say-s'){say(SENT[G.sid].en);return;}
   if(a==='say-slow'){say(SENT[G.sid].en,{rate:.7});return;}
   if(a==='say-p'){say(phraseText(G.sid,G.a,G.b));return;}
-  if(a==='fu'){runAI(aiFollow(b.dataset.v),b.textContent);return;}
+  if(a==='fu'){const pr=aiProvider()&&pFollow(b.dataset.v);if(pr)realAI(pr,b.textContent);else runAI(aiFollow(b.dataset.v),b.textContent);return;}
   if(a==='st'){setWordStatus(+b.dataset.v);return;}
   if(a==='xsel'){const tk=TOK[G.sid][G.i];const r=exprRange(G.sid,tk.x);openPhrase(G.sid,r[0],r[1]);return;}
   if(a==='xsave'){const tk=TOK[G.sid][G.i];const r=exprRange(G.sid,tk.x);savePhrase(G.sid,r[0],r[1]);renderGloss();return;}
@@ -619,6 +619,7 @@ try{loadVoices();speechSynthesis.onvoiceschanged=loadVoices;}catch(e){}
 function pickVoice(lg){lg=lg||'en';if(lg!=='en'){const vs=voicesFor(lg);const pref=BCP[lg];return vs.find(v=>pref&&String(v.lang).replace('_','-').toLowerCase()===pref.toLowerCase())||vs[0]||null;}if(S.settings.voice){const v=VOICES.find(x=>x.name===S.settings.voice);if(v)return v;}return VOICES.find(v=>/en[-_]GB/i.test(v.lang))||VOICES[0]||null;}
 function say(text,o){
   o=o||{};
+  if(useClaudeVoice())return claudeSay(text,o);
   try{
     if(!('speechSynthesis' in window))throw new Error('no tts');
     const lg=o.lang||tl();const u=new SpeechSynthesisUtterance(text);u.lang=BCP[lg]||lg;u.rate=o.rate||S.settings.rate||1;const v=pickVoice(lg);if(v)u.voice=v;else if(lg!=='en'&&ALLV.length&&!o.quiet)toast('Este dispositivo não tem voz para '+langName(lg).toLowerCase()+'. Instala uma nas definições do sistema.');
@@ -628,7 +629,7 @@ function say(text,o){
 }
 const PL={on:false,k:0};
 function clearMarks(){$$('#text .sent.playing').forEach(x=>x.classList.remove('playing'));$$('#text .w.spk').forEach(x=>x.classList.remove('spk'));}
-function stopPlay(){PL.on=false;try{speechSynthesis.cancel();}catch(e){}clearMarks();renderPlay();}
+function stopPlay(){PL.on=false;try{speechSynthesis.cancel();}catch(e){}stopClaudeVoice();clearMarks();renderPlay();}
 function playFrom(k){
   if(!PL.on)return;const ids=sentsOf(lessonById(cur));
   if(k>=ids.length){stopPlay();PL.k=0;toast('Chegaste ao fim do texto','check');return;}
@@ -838,9 +839,10 @@ $('#v-review').addEventListener('click',e=>{
 function exportModal(){
   const rows=Object.keys(S.vocab).filter(l=>{const v=S.vocab[l];return v.st>=1&&v.st<=4&&v.ctx&&TOK[v.ctx.sid];}).map(l=>{const v=S.vocab[l];const sd=SENT[v.ctx.sid];return[v.ctx.surf,info(l).pt||'',sd.en,sd.pt||'',v.note||''].join('\t');});
   setModal(`<div class="mhead"><div><div class="eyebrow">Exportar</div><h2 style="margin-top:6px">Para o Anki</h2></div><button class="ibtn" data-close aria-label="Fechar">${I('x')}</button></div>
-  <p class="muted" style="font-size:14px">${rows.length} cartões, separados por tabulações: palavra, tradução, frase, tradução da frase e nota. No Anki: Ficheiro → Importar → colar num ficheiro .txt.</p>
+  <p class="muted" style="font-size:14px">${rows.length} cartões, separados por tabulações: palavra, tradução, frase, tradução da frase e nota. No Anki: Ficheiro → Importar e escolhe o ficheiro .txt.</p>
   <textarea id="ex-t" class="inp" style="height:220px;padding:12px;font:13px/1.5 ui-monospace,Menlo,monospace" readonly>${esc(rows.join('\n'))}</textarea>
-  <div class="row" style="justify-content:flex-end"><button class="btn" data-close>Fechar</button><button class="btn pri" id="ex-c">Copiar tudo</button></div>`,'Exportar');
+  <div class="row" style="justify-content:flex-end"><button class="btn" data-close>Fechar</button>${canDownload()?'<button class="btn" id="ex-dl">Descarregar .txt</button>':''}<button class="btn pri" id="ex-c">Copiar tudo</button></div>`,'Exportar');
+  const dlb=$('#ex-dl');if(dlb)dlb.onclick=()=>saveFile('glosa-anki.txt',$('#ex-t').value);
   $('#ex-c').onclick=()=>{const ta=$('#ex-t');const fb=()=>{ta.focus();ta.select();toast('Selecionado. Copia com Ctrl+C.');};try{navigator.clipboard.writeText(ta.value).then(()=>toast('Copiado','check'),fb);}catch(e){fb();}};
 }
 
@@ -977,13 +979,10 @@ function settingsModal(){
   <div class="set-sec"><h3>Línguas</h3><div class="grid2"><div class="field"><label for="s-l1">Língua materna</label><select id="s-l1">${LANGS.map(x=>`<option value="${x.code}" ${x.code===(s.native||'pt')?'selected':''}>${esc(x.pt)}</option>`).join('')}</select></div><div class="field"><label for="s-l2">A aprender</label><select id="s-l2">${LANGS.map(x=>`<option value="${x.code}" ${x.code===tl()?'selected':''}>${esc(x.pt)}</option>`).join('')}</select></div></div>
     <div class="field"><label for="s-ui">Língua da interface</label><select id="s-ui"><option>Português (Portugal)</option>${LANGS.filter(x=>x.code!=='pt').map(x=>`<option disabled>${esc(x.pt)} · versão real</option>`).join('')}</select><span class="hint">${(s.native||'pt').indexOf('pt')===0?'':'Na demo as traduções vêm em português. Na versão real vêm na tua língua materna. '}Na versão real, a interface fica traduzida para todas as línguas da lista.</span></div>
     <button class="btn sm" id="s-langs" style="justify-self:start">${I('globe',16)} Ver todas as línguas</button></div>
-  <div class="set-sec"><h3>Tradução e IA</h3>
-    <div class="field"><label for="s-en">Motor de tradução</label><select id="s-en">${[['deepl','DeepL API Free (500 mil caracteres/mês)'],['argos','Argos Translate (offline, open source)'],['libre','LibreTranslate (alojado por ti)'],['llm','O mesmo modelo de IA']].map(o=>`<option value="${o[0]}" ${s.engine===o[0]?'selected':''}>${o[1]}</option>`).join('')}</select></div>
-    <div class="field"><label for="s-ai">Modelo para explicações</label><select id="s-ai">${[['gemini','Gemini · plano grátis'],['groq','Groq · plano grátis'],['byok','A minha chave (BYOK)'],['ollama','Ollama · no meu PC']].map(o=>`<option value="${o[0]}" ${s.llm===o[0]?'selected':''}>${o[1]}</option>`).join('')}</select></div>
-    <div class="field"><label for="s-key">Chave de API</label><input type="password" id="s-key" placeholder="Disponível na versão real" disabled><span class="hint">Na demo, traduções e explicações já vêm incluídas. Na versão real, as respostas ficam em cache para poupar o limite grátis.</span></div></div>
+  ${aiSettingsHTML()}
   <div class="set-sec"><h3>Leitura e voz</h3>
     <div class="grid2"><div class="field"><label for="s-fs">Tamanho do texto · <span id="s-fs-v">${s.fs}px</span></label><input type="range" id="s-fs" min="16" max="28" value="${s.fs}"></div><div class="field"><label for="s-lh">Espaçamento · <span id="s-lh-v">${s.lh}</span></label><input type="range" id="s-lh" min="1.6" max="2.3" step="0.05" value="${s.lh}"></div></div>
-    <div class="field"><label for="s-voice">Voz</label><select id="s-voice"><option value="">Automática (inglês britânico)</option>${VOICES.map(v=>`<option value="${esc(v.name)}" ${s.voice===v.name?'selected':''}>${esc(v.name)} · ${esc(v.lang)}</option>`).join('')}</select>${VOICES.length?'':'<span class="hint">Este navegador ainda não listou vozes em inglês.</span>'}</div>
+    <div class="field"><label for="s-voice">Voz do dispositivo (inglês)</label><select id="s-voice"><option value="">Automática (inglês britânico)</option>${VOICES.map(v=>`<option value="${esc(v.name)}" ${s.voice===v.name?'selected':''}>${esc(v.name)} · ${esc(v.lang)}</option>`).join('')}</select>${VOICES.length?'':'<span class="hint">Este navegador ainda não listou vozes em inglês.</span>'}</div>
     ${tog('s-ex','Sublinhar expressões e phrasal verbs',s.expr)}${tog('s-sb','Botão de traduzir frase',s.sbtn)}</div>
   <div class="set-sec"><h3>Metas diárias</h3><div class="grid3"><div class="field"><label for="g-r">Palavras</label><input type="number" id="g-r" min="10" step="10" value="${s.goal.r}"></div><div class="field"><label for="g-l">Minutos a ouvir</label><input type="number" id="g-l" min="1" value="${s.goal.l}"></div><div class="field"><label for="g-c">Cartões</label><input type="number" id="g-c" min="1" value="${s.goal.c}"></div></div></div>
   <div class="set-sec"><h3>Conta e dados</h3><div class="src"><span class="si">${I('link')}</span><span class="grow"><b>Entrar com Google</b><small>Sincroniza telemóvel e PC (Supabase) · versão real</small></span><span class="chip">Em breve</span></div>
@@ -1005,6 +1004,7 @@ function settingsModal(){
   on('g-l','input',e=>{s.goal.l=Math.max(1,+e.target.value||1);save();updateChrome();});
   on('g-c','input',e=>{s.goal.c=Math.max(1,+e.target.value||1);save();updateChrome();});
   on('s-backup','click',()=>backupModal());
+  bindAISettings();
   on('s-reset','click',()=>{
     const b=$('#s-reset');if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='Tens a certeza? Toca outra vez';return;}
     try{localStorage.removeItem(KEY);}catch(e){}

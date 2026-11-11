@@ -1,4 +1,10 @@
-import sys, asyncio
+import asyncio, os, shutil
+HERE=os.path.dirname(os.path.abspath(__file__))
+APP=os.path.join(HERE,'..','index.html')
+CHROME=shutil.which('google-chrome') or shutil.which('chromium') or None
+os.chdir(HERE)
+os.makedirs('shots',exist_ok=True)
+import sys
 from playwright.async_api import async_playwright
 src=APP
 async def run(b,vp,tag):

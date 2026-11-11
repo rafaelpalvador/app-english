@@ -2,7 +2,7 @@ let started=false;
 function start(d){
   if(started)return;started=true;d=d||{};
   if(d.cur&&lessonById(d.cur))cur=d.cur;
-  applyTheme();
+  applyTheme();applyAITranslations();initCaps();
   go(d.view||fromHash()||'home',true);
 }
 try{

@@ -2,7 +2,7 @@
 // Uso: node build.js
 const fs=require('fs'),path=require('path');
 const dir=__dirname;
-const parts=['data','data-extra','langs','app','app2','import','boot'];
+const parts=['data','data-extra','langs','app','app2','import','ai','boot'];
 const js=parts.map(n=>fs.readFileSync(path.join(dir,'src',n+'.js'),'utf8')).join('\n');
 const shell=fs.readFileSync(path.join(dir,'src','shell.html'),'utf8');
 fs.writeFileSync(path.join(dir,'index.html'),shell.split('/*__SCRIPT__*/').join(js));
