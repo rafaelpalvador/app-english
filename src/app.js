@@ -335,11 +335,27 @@ function renderRead(){
   renderText();applyReader();updateCov();renderPre();renderPend();renderPlay();renderGloss();bindHandle();
   const p=S.pos[L.id]||0;if(p>.02&&p<.98){requestAnimationFrame(()=>{const tw=$('.textwrap');if(tw){const top=tw.getBoundingClientRect().top+window.scrollY;window.scrollTo(0,top+(tw.offsetHeight-window.innerHeight)*p-80);}});}
 }
+function phraseWords(txt,sid){const lg=SENT_LANG[sid]||'en';return segWords(String(txt),lg).filter(t=>t.w).map(t=>lowerL(t.w,lg).replace(/’/g,"'"));}
+function phraseRanges(sid){
+  const toks=TOK[sid];if(!toks)return[];const lg=SENT_LANG[sid]||'en';const wi=[];toks.forEach((t,i)=>{if(t.w)wi.push(i);});
+  const lw=wi.map(i=>lowerL(toks[i].w,lg).replace(/’/g,"'"));const found=[];
+  Object.keys(S.vocab).forEach(k=>{
+    if(k.indexOf('phrase:')!==0)return;const v=S.vocab[k];if(!v||v.st===-1||v.st===0)return;
+    const pw=phraseWords(k.slice(7),sid);if(pw.length<2)return;
+    for(let s=0;s+pw.length<=lw.length;s++){let ok=true;for(let j=0;j<pw.length;j++){if(lw[s+j]!==pw[j]){ok=false;break;}}if(ok)found.push({a:wi[s],b:wi[s+pw.length-1],k:k,st:v.st,n:pw.length});}
+  });
+  found.sort((x,y)=>y.n-x.n);const used={},out=[];
+  found.forEach(f=>{for(let i=f.a;i<=f.b;i++)if(used[i])return;for(let i=f.a;i<=f.b;i++)used[i]=1;out.push(f);});
+  return out;
+}
+function adjW(sid,i,d){const t=TOK[sid];for(let j=i+d;j>=0&&j<t.length;j+=d){if(t[j].w)return j;}return -1;}
 function sentHTML(sid){
-  let h='';
+  let h='';const R=phraseRanges(sid),sA={},eA={};R.forEach(r=>{sA[r.a]=r;eA[r.b]=r;});
   TOK[sid].forEach((k,i)=>{
-    if(k.p){h+=esc(k.p);return;}
-    h+=`<span class="w st${stc(k.l)}${k.x!=null?' x':''}${isPend(sid,i)?' pend':''}" tabindex="0" role="button" data-s="${sid}" data-i="${i}">${esc(k.w)}</span>`;
+    if(sA[i])h+=`<span class="phr ph${sA[i].st}" title="${esc(label(sA[i].k))}">`;
+    if(k.p){h+=esc(k.p);}
+    else h+=`<span class="w st${stc(k.l)}${k.x!=null?' x':''}${isPend(sid,i)?' pend':''}" tabindex="0" role="button" data-s="${sid}" data-i="${i}">${esc(k.w)}</span>`;
+    if(eA[i])h+='</span>';
   });
   return`<span class="sent" id="${sid}">${h}<button class="sbtn" data-sb="${sid}" aria-label="Traduzir frase" title="Traduzir frase">${I('tr',15)}</button></span>`;
 }
@@ -378,7 +394,7 @@ function emptyGloss(){
   return`<div class="g-empty"><div class="eyebrow">A glosa</div>
   <h3 style="font:400 26px/1.1 var(--f-d)">Toca numa palavra para ver o significado neste texto.</h3>
   <div class="ill" aria-hidden="true"><div style="position:absolute;inset:18px 18px auto;font:400 18px/1.9 var(--f-r);color:var(--ink-2)">the crew <span style="background:var(--hl2);border-radius:4px;padding:0 3px;color:var(--ink)">spotted</span> the <span style="background:var(--ink);color:var(--surface);border-radius:4px;padding:0 3px">faint</span> beam and <span style="text-decoration:underline dotted var(--accent);text-decoration-thickness:2px;text-underline-offset:5px">steered away</span></div><div style="position:absolute;right:14px;bottom:12px;padding:6px 10px;border-radius:10px;background:var(--surface);border:1px solid var(--line);font:400 15px var(--f-d);box-shadow:var(--shadow)">ténue, fraco</div></div>
-  <p class="muted" style="font-size:14px">Arrasta sobre várias palavras para traduzir uma expressão. O ícone no fim de cada frase traduz a frase inteira.</p>
+  <p class="muted" style="font-size:14px">Para juntar palavras como <i>put down</i>, mantém o dedo na primeira e arrasta até à última. No computador, arrasta com o rato ou usa Shift + clique. O ícone no fim de cada frase traduz a frase inteira.</p>
   <div class="keys"><div><span>Palavra anterior / seguinte</span><span><kbd>←</kbd> <kbd>→</kbd></span></div><div><span>Mudar o nível</span><span><kbd>1</kbd>–<kbd>4</kbd> <kbd>K</kbd> <kbd>N</kbd></span></div><div><span>Explicar com IA</span><span><kbd>E</kbd></span></div><div><span>Ouvir a palavra</span><span><kbd>P</kbd></span></div></div></div>`;
 }
 function chatHTML(){
@@ -392,7 +408,7 @@ function chatHTML(){
 }
 function chipsHTML(){
   const busy=G.chat.some(m=>m.state==='load'||m.state==='type'||m.state==='stream');if(busy)return'';
-  const list=G.kind==='word'?[['ex','Outro exemplo'],['pron','Pronúncia'],['fam','Formas da palavra'],['where','Onde aparece']]:[['words','Palavras desta frase'],['slow','Ouvir devagar']];
+  const list=G.kind==='word'?[['ex','Outro exemplo'],['pron','Pronúncia'],['fam','Formas da palavra'],['where','Onde aparece']]:G.kind==='phrase'?[['ex','Outro exemplo'],['pslow','Ouvir devagar']]:[['words','Palavras desta frase'],['slow','Ouvir devagar']];
   return`<div class="chips">${list.map(c=>`<button data-g="fu" data-v="${c[0]}">${c[1]}</button>`).join('')}</div>
   <form class="ask" id="g-ask"><input id="g-ask-in" type="text" placeholder="Pergunta algo sobre esta ${G.kind==='word'?'palavra':'frase'}…" aria-label="Pergunta à IA" autocomplete="off"><button class="btn xs blue" type="submit" aria-label="Enviar">${I('send',16)}</button></form>
   ${aiProvider()?`<p class="muted" style="font-size:12px">Respostas de ${aiLabel(aiProvider())}, guardadas para não repetir pedidos. Podem conter erros.</p>`:`<p class="muted" style="font-size:12px">Respostas de exemplo. ${inClaude()?'A IA do Claude liga-se sozinha quando estiver disponível.':'Para respostas reais, adiciona uma chave grátis do Gemini em Definições → IA e voz.'}</p>`}`;
@@ -416,7 +432,9 @@ function renderGloss(){
     <div class="g-sub">${e.ipa?`<span class="ipa">${esc(e.ipa)}</span>`:''}${e.pos?`<span class="pill p-i">${esc(e.pos)}</span>`:''}${label(l)!==lowerL(tk.w,tl())?`<span>forma de <b style="color:var(--ink)">${esc(label(l))}</b></span>`:''}</div>
     ${(S.settings.native||'pt').indexOf('pt')!==0&&e.pt?`<div class="muted" style="font-size:12px;margin-top:12px">Demo: tradução em português. Na versão real vem em ${esc(langName(S.settings.native).toLowerCase())}.</div>`:''}
     <div class="g-tr">${e.pt?esc(e.pt):noEntryHTML(tk.l,G.sid,G.i)}</div>
-    ${x?`<div class="g-expr"><div><b>Expressão:</b> ${esc(x.w.join(' '))} <span class="muted">=</span> ${esc(x.pt)}</div><div class="row" style="gap:6px"><button class="btn xs" data-g="xsel">Ver a expressão</button><button class="btn xs" data-g="xsave">${I('plus',14)} Guardar como cartão</button></div></div>`:''}
+    ${(()=>{const R=phraseRanges(G.sid).find(r=>G.i>=r.a&&G.i<=r.b);return R?`<div class="g-expr"><div><b>Faz parte de</b> «${esc(label(R.k))}» <span class="muted">=</span> ${esc(info(R.k).pt||'…')}</div><div class="row" style="gap:6px"><button class="btn xs" data-g="phopen" data-a="${R.a}" data-b="${R.b}">Abrir a expressão</button></div></div>`:'';})()}
+    <div class="g-join"><span>Juntar com a palavra</span><button class="btn xs" data-g="join" data-v="-1" ${adjW(G.sid,G.i,-1)<0?'disabled':''}>← anterior</button><button class="btn xs" data-g="join" data-v="1" ${adjW(G.sid,G.i,1)<0?'disabled':''}>seguinte →</button></div>
+    ${x&&!(S.vocab['phrase:'+x.w.join(' ')])?`<div class="g-expr"><div><b>Expressão:</b> ${esc(x.w.join(' '))} <span class="muted">=</span> ${esc(x.pt)}</div><div class="row" style="gap:6px"><button class="btn xs" data-g="xsel">Ver a expressão</button><button class="btn xs" data-g="xsave">${I('plus',14)} Guardar como cartão</button></div></div>`:''}
     ${tabsHTML()}`;
     if(G.tab==='mean'){
       const n=lessonLemmas(cur)[l]?sentsOf(lessonById(cur)).reduce((a,sid)=>a+TOK[sid].filter(t=>t.w&&t.l===l).length,0):0;
@@ -439,11 +457,18 @@ function renderGloss(){
       h+=`<div class="g-row"><button class="btn xs" data-g="say-slow">${I('spk',15)} Ouvir devagar</button></div>`;
     }else h+=`<div class="ai">${chatHTML()}${chipsHTML()}</div>`;
   }else{
-    const txt=phraseText(G.sid,G.a,G.b);const x=phraseExpr(G.sid,G.a,G.b);const key='phrase:'+txt.toLowerCase();const saved=!!S.vocab[key];
-    h+=`<div class="g-band" style="background:var(--accent)"></div><div class="row between" style="flex-wrap:nowrap;align-items:flex-start"><div style="min-width:0"><div class="eyebrow">${x?'Expressão':'Seleção'}</div><div class="g-word" dir="auto" style="font-size:34px;margin-top:6px">${esc(txt)}</div></div><div class="row" style="flex-wrap:nowrap;gap:6px"><button class="ibtn" data-g="say-p" aria-label="Ouvir">${I('spk')}</button><button class="ibtn g-x" data-g="close" aria-label="Fechar">${I('x')}</button></div></div>
-    <div class="g-tr">${x?esc(x.pt):'<span class="muted" style="font:400 15px/1.5 var(--f-u)">Sem tradução própria na demo. Abaixo tens a frase traduzida; na versão real a seleção é traduzida à parte.</span>'}</div>
-    <div class="g-ctx" dir="auto" style="margin-top:16px">${sentMark(G.sid,G.a,G.b)}<span class="tr">${sd.pt?esc(sd.pt):''}</span></div>
-    <div class="g-row"><button class="btn sm ${saved?'':'pri'}" data-g="psave" ${saved?'disabled':''}>${I(saved?'check':'plus',16)} ${saved?'Já tens este cartão':'Guardar como cartão'}</button></div>`;
+    const txt=phraseText(G.sid,G.a,G.b);const x=phraseExpr(G.sid,G.a,G.b);const key='phrase:'+txt.toLowerCase();const v=S.vocab[key];const s=v?v.st:0;
+    const pe=info(key);const pt=x?x.pt:(pe&&pe.pt)||'';
+    h+=`<div class="row between" style="flex-wrap:nowrap;align-items:flex-start"><div style="min-width:0"><div class="eyebrow">${v?ST_NAME[s]:x?'Expressão':'Palavras juntas'}</div><div class="g-word" dir="auto" style="font-size:36px;margin-top:6px">${esc(txt)}</div></div><div class="row" style="flex-wrap:nowrap;gap:6px"><button class="ibtn" data-g="say-p" aria-label="Ouvir">${I('spk')}</button><button class="ibtn g-x" data-g="close" aria-label="Fechar">${I('x')}</button></div></div>
+    <div class="g-tr">${pt?esc(pt):phraseTrHTML(key,txt,G.sid)}</div>
+    <div class="g-join"><span>Ajustar</span><button class="btn xs" data-g="ext" data-v="l+" ${adjW(G.sid,G.a,-1)<0?'disabled':''}>← mais uma</button><button class="btn xs" data-g="ext" data-v="l-">− primeira</button><button class="btn xs" data-g="ext" data-v="r-">− última</button><button class="btn xs" data-g="ext" data-v="r+" ${adjW(G.sid,G.b,1)<0?'disabled':''}>mais uma →</button></div>
+    ${tabsHTML()}`;
+    if(G.tab==='ai')h+=`<div class="ai">${chatHTML()}${chipsHTML()}</div>`;
+    else h+=`<div class="g-ctx" dir="auto">${sentMark(G.sid,G.a,G.b)}<span class="tr">${sd.pt?esc(sd.pt):sentTrHTML(G.sid,true)}</span></div>
+      <div class="g-row"><button class="btn xs" data-g="say-p">Ouvir</button><button class="btn xs" data-g="say-slow">Ouvir a frase devagar</button></div>`;
+    h+=`<div class="st-pick"><div class="row between" style="margin-bottom:8px"><span class="eyebrow">Estado da expressão</span>${s>=1&&s<=4?'<span class="chip y" style="height:24px">Tem cartão</span>':''}</div>
+    <div class="st-row" role="group" aria-label="Estado da expressão">${[[0,'Nova'],[1,'1'],[2,'2'],[3,'3'],[4,'4'],[5,'Conhecida']].map(b=>`<button class="b${b[0]} ${s===b[0]?'on':''}" data-g="pst" data-v="${b[0]}" aria-pressed="${s===b[0]}">${b[1]}</button>`).join('')}</div>
+    <div class="st-foot"><span>${v?'Fica marcada sempre que aparecer num texto':'Escolhe 1–4 para guardar como cartão'}</span>${v?'<button class="linkbtn" data-g="pst" data-v="0">Apagar expressão</button>':''}</div></div>`;
   }
   el.innerHTML=h;
   const ask=$('#g-ask');if(ask)ask.addEventListener('submit',ev=>{ev.preventDefault();const q=$('#g-ask-in').value.trim();if(q){if(aiProvider())realAI(pAsk(q),q);else runAI(askReply(q),q);}});
@@ -451,6 +476,7 @@ function renderGloss(){
 }
 /* IA (pré-escrita) */
 function aiMain(){
+  if(G.kind==='phrase'){const txt=phraseText(G.sid,G.a,G.b),x=phraseExpr(G.sid,G.a,G.b),sd=SENT[G.sid];return x?`«${txt}» = ${x.pt}.\n\nÉ uma expressão: lê-a como um bloco, não palavra a palavra.`+(sd.ai?'\n\nSobre a frase: '+sd.ai:''):`Juntaste «${txt}». Esta combinação não tem explicação de exemplo. `+(inClaude()?'A IA do Claude explica-a quando estiver ligada.':'Para uma explicação real, adiciona uma chave grátis do Gemini em Definições → IA e voz.');}
   if(G.kind==='sent'){const sd=SENT[G.sid];return sd.ai?'Sobre esta frase: '+sd.ai:'Esta frase não tem explicação pré-escrita na demo. Na versão real, a IA recebe a frase e o parágrafo e explica a estrutura e o vocabulário aqui.';}
   const tk=TOK[G.sid][G.i],l=tk.l,e=info(l),x=tk.x!=null?EXPR[tk.x]:null;const sd=SENT[G.sid];
   if(!e.pt&&!x)return'Esta palavra não tem entrada na demo. Na versão real, a IA recebe a frase e o parágrafo à volta e explica aqui o sentido neste contexto, com um exemplo ao teu nível.';
@@ -463,6 +489,10 @@ function aiMain(){
   return t;
 }
 function aiFollow(k){
+  if(G.kind==='phrase'){const txt=phraseText(G.sid,G.a,G.b);
+    if(k==='pslow'){say(txt,{rate:.7});return`A ler «${txt}» devagar. Repete em voz alta: as expressões fixam-se melhor quando as dizes como um bloco.`;}
+    const pw=phraseWords(txt,G.sid);const o=[];Object.keys(SENT).forEach(sid=>{if(sid===G.sid||!TOK[sid])return;const lw=TOK[sid].filter(t=>t.w).map(t=>lowerL(t.w,SENT_LANG[sid]||'en'));for(let s=0;s+pw.length<=lw.length;s++){if(pw.every((w,j)=>lw[s+j]===w)){o.push(sid);break;}}});
+    return o.length?'Noutro texto da tua biblioteca:\n\n'+o.slice(0,2).map(sid=>`«${SENT[sid].en}»\n→ ${SENT[sid].pt||'(sem tradução)'}`).join('\n\n'):`«${txt}» só aparece neste texto. `+(aiProvider()?'':'Com a IA ligada, aparece aqui um exemplo novo.');}
   if(G.kind!=='word'){
     if(k==='words'){const o=[];TOK[G.sid].forEach(t=>{if(t.w&&status(t.l)!==5&&status(t.l)!==-1&&o.indexOf(t.l)<0)o.push(t.l);});return o.length?'Palavras que ainda estás a aprender nesta frase:\n'+o.map(l=>`• ${l}: ${info(l).pt||'sem entrada'}`).join('\n'):'Já conheces todas as palavras desta frase.';}
     if(k==='slow'){say(SENT[G.sid].en,{rate:.7});return'A ler a frase a 70% da velocidade. Repete em voz alta logo a seguir (shadowing): ajuda a fixar o ritmo.';}
@@ -479,7 +509,7 @@ function aiFollow(k){
   return'';
 }
 function askReply(q){const s=SENT[G.sid].en;return`Recebi a pergunta. Nesta demo as respostas são pré-escritas, por isso não consigo responder a perguntas livres.\n\nNa versão real, a pergunta segue para o modelo junto com a frase «${s}» e o parágrafo, e a resposta aparece aqui.`;}
-function startAI(){if(!G.chat.length){const key=(G.kind==='word'?TOK[G.sid][G.i].l:'S')+'|'+G.sid;if(aiProvider())realAI(G.kind==='word'?pWordExplain():pSentExplain(),null,'ai:'+(S.settings.native||'pt')+':'+key);else runAI(aiMain(),null,key);}}
+function startAI(){if(!G.chat.length){const key=(G.kind==='word'?TOK[G.sid][G.i].l:G.kind==='phrase'?'P:'+phraseText(G.sid,G.a,G.b).toLowerCase():'S')+'|'+G.sid;if(aiProvider())realAI(G.kind==='word'?pWordExplain():G.kind==='phrase'?pPhraseExplain():pSentExplain(),null,'ai:'+(S.settings.native||'pt')+':'+key);else runAI(aiMain(),null,key);}}
 function runAI(text,q,key){
   const g=G;if(q)g.chat.push({me:q});
   const cached=key&&AIC[key];const m={ai:text,state:'load',n:0,cached:!!cached};g.chat.push(m);renderGloss();scrollGloss();
@@ -507,8 +537,15 @@ function glossAct(a,b){
   if(a==='fu'){const pr=aiProvider()&&pFollow(b.dataset.v);if(pr)realAI(pr,b.textContent);else runAI(aiFollow(b.dataset.v),b.textContent);return;}
   if(a==='st'){setWordStatus(+b.dataset.v);return;}
   if(a==='xsel'){const tk=TOK[G.sid][G.i];const r=exprRange(G.sid,tk.x);openPhrase(G.sid,r[0],r[1]);return;}
-  if(a==='xsave'){const tk=TOK[G.sid][G.i];const r=exprRange(G.sid,tk.x);savePhrase(G.sid,r[0],r[1]);renderGloss();return;}
-  if(a==='psave'){savePhrase(G.sid,G.a,G.b);renderGloss();return;}
+  if(a==='xsave'){const tk=TOK[G.sid][G.i];const r=exprRange(G.sid,tk.x);savePhrase(G.sid,r[0],r[1]);renderText();refreshWords();renderGloss();return;}
+  if(a==='psave'){savePhrase(G.sid,G.a,G.b);renderText();refreshWords();renderGloss();return;}
+  if(a==='pst'){setPhraseStatus(+b.dataset.v);return;}
+  if(a==='phopen'){openPhrase(G.sid,+b.dataset.a,+b.dataset.b);return;}
+  if(a==='join'){const j=adjW(G.sid,G.i,+b.dataset.v);if(j>=0)openPhrase(G.sid,Math.min(G.i,j),Math.max(G.i,j));return;}
+  if(a==='ext'){let A=G.a,B=G.b;const v=b.dataset.v;
+    if(v==='l+'){const j=adjW(G.sid,A,-1);if(j>=0)A=j;}else if(v==='r+'){const j=adjW(G.sid,B,1);if(j>=0)B=j;}
+    else if(v==='l-'){const j=adjW(G.sid,A,1);if(j>=0&&j<=B)A=j;}else if(v==='r-'){const j=adjW(G.sid,B,-1);if(j>=0&&j>=A)B=j;}
+    if(A===B)openWord(G.sid,A);else openPhrase(G.sid,A,B);return;}
   if(a==='goword'){const l=b.dataset.v;const i=TOK[G.sid].findIndex(t=>t.w&&t.l===l);if(i>=0)openWord(G.sid,i);return;}
 }
 function setWordStatus(v){
@@ -518,11 +555,18 @@ function setWordStatus(v){
   if(v>=1&&v<=4&&!(before>=1&&before<=4))toast('Cartão criado com esta frase','cards');
   else if(v===5&&before!==5)toast('«'+tk.l+'» marcada como conhecida','check');
 }
-function savePhrase(sid,a,b){
+function savePhrase(sid,a,b,quiet){
   const txt=phraseText(sid,a,b);const key='phrase:'+txt.toLowerCase();if(S.vocab[key])return;
-  const x=phraseExpr(sid,a,b);
-  S.vocab[key]={st:1,phrase:true,pt:x?x.pt:(SENT[sid].pt||''),ctx:{sid:sid,surf:txt},srs:newSrs(),added:TD()};
-  save();updateChrome();toast('Expressão guardada como cartão','cards');
+  const x=phraseExpr(sid,a,b);const ai=S.ai&&S.ai.d&&S.ai.d[key];
+  S.vocab[key]={st:1,phrase:true,pt:x?x.pt:(ai&&ai.pt)||'',ctx:{sid:sid,surf:txt},srs:newSrs(),added:TD()};
+  save();updateChrome();if(!quiet)toast('Expressão guardada como cartão','cards');
+}
+function setPhraseStatus(v){
+  if(!G||G.kind!=='phrase')return;const txt=phraseText(G.sid,G.a,G.b);const key='phrase:'+txt.toLowerCase();const had=!!S.vocab[key];
+  if(!had){if(v===0)return;savePhrase(G.sid,G.a,G.b,true);}
+  setStatusFor(key,v);
+  if(v===0||v===-1)toast('Expressão apagada');else if(!had&&v<=4)toast('Expressão guardada como cartão','cards');else if(v===5)toast('Expressão marcada como conhecida','check');
+  renderText();refreshWords();renderGloss();updateChrome();
 }
 function navWord(d){
   const all=$$('#text .w');if(!all.length)return;let k=-1;
@@ -543,7 +587,7 @@ function bindHandle(){
 let suppress=0;
 $('#v-read').addEventListener('click',e=>{
   if(Date.now()-suppress<350)return;
-  const w=e.target.closest('.w');if(w){if(S.settings.flow){togglePend(w);return;}openWord(w.dataset.s,+w.dataset.i);return;}
+  const w=e.target.closest('.w');if(w){if(S.settings.flow){togglePend(w);return;}if(e.shiftKey&&G&&G.kind==='word'&&G.sid===w.dataset.s&&G.i!==+w.dataset.i){const j=+w.dataset.i;openPhrase(G.sid,Math.min(G.i,j),Math.max(G.i,j));return;}openWord(w.dataset.s,+w.dataset.i);return;}
   const pw=e.target.closest('[data-pre]');if(pw){const p=pw.dataset.pre.split(':');openWord(p[0],+p[1]);const el=$(`#text .w[data-s="${p[0]}"][data-i="${p[1]}"]`);if(el)try{el.scrollIntoView({block:'center'});}catch(x){}return;}
   const sb=e.target.closest('[data-sb]');if(sb){openSent(sb.dataset.sb);return;}
   const g=e.target.closest('[data-g]');if(g){glossAct(g.dataset.g,g);return;}
@@ -565,17 +609,22 @@ $('#v-read').addEventListener('click',e=>{
   if(!wide()&&G&&e.target.closest('#text'))closeGloss();
 });
 $('#v-read').addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.classList&&e.target.classList.contains('w')){e.preventDefault();openWord(e.target.dataset.s,+e.target.dataset.i);}});
-function selPhrase(){
-  let sel;try{sel=window.getSelection();}catch(e){return;}
-  if(!sel||sel.isCollapsed)return;
-  const ws=$$('#text .w').filter(el=>{try{return sel.containsNode(el,true);}catch(e){return false;}});
-  if(ws.length<2)return;const sid=ws[0].dataset.s;const same=ws.filter(w=>w.dataset.s===sid);
-  const a=+same[0].dataset.i,b=+same[same.length-1].dataset.i;
-  try{sel.removeAllRanges();}catch(e){}
-  suppress=Date.now();openPhrase(sid,a,b);
-}
-$('#v-read').addEventListener('mouseup',e=>{if(e.target.closest('#text'))setTimeout(selPhrase,0);});
-$('#v-read').addEventListener('touchend',e=>{if(e.target.closest('#text'))setTimeout(selPhrase,400);});
+/* juntar palavras: no telemóvel, premir e arrastar; no computador, arrastar com o rato */
+const DR={on:false,sid:null,a:-1,b:-1,timer:null,x:0,y:0,md:null};
+function drWord(x,y){const el=document.elementFromPoint(x,y);return el&&el.closest?el.closest('#text .w'):null;}
+function drMark(){$$('#text .w.dr').forEach(w=>w.classList.remove('dr'));if(!DR.on)return;const lo=Math.min(DR.a,DR.b),hi=Math.max(DR.a,DR.b);$$(`#text .w[data-s="${DR.sid}"]`).forEach(w=>{const i=+w.dataset.i;if(i>=lo&&i<=hi)w.classList.add('dr');});}
+function drStart(w){DR.on=true;DR.sid=w.dataset.s;DR.a=DR.b=+w.dataset.i;if(PL.on)stopPlay();drMark();try{if(navigator.vibrate)navigator.vibrate(12);}catch(e){}}
+function drMove(x,y){const w=drWord(x,y);if(w&&w.dataset.s===DR.sid&&+w.dataset.i!==DR.b){DR.b=+w.dataset.i;drMark();}}
+function drEnd(){if(!DR.on)return;const lo=Math.min(DR.a,DR.b),hi=Math.max(DR.a,DR.b);DR.on=false;drMark();suppress=Date.now();if(hi>lo)openPhrase(DR.sid,lo,hi);else openWord(DR.sid,lo);}
+const VR=$('#v-read');
+VR.addEventListener('touchstart',e=>{const w=e.target.closest&&e.target.closest('#text .w');if(!w||e.touches.length>1||S.settings.flow)return;const t=e.touches[0];DR.x=t.clientX;DR.y=t.clientY;clearTimeout(DR.timer);DR.timer=setTimeout(()=>drStart(w),350);},{passive:true});
+VR.addEventListener('touchmove',e=>{const t=e.touches[0];if(DR.on){e.preventDefault();drMove(t.clientX,t.clientY);return;}if(Math.abs(t.clientX-DR.x)+Math.abs(t.clientY-DR.y)>10)clearTimeout(DR.timer);},{passive:false});
+VR.addEventListener('touchend',e=>{clearTimeout(DR.timer);if(DR.on){e.preventDefault();drEnd();}},{passive:false});
+VR.addEventListener('touchcancel',()=>{clearTimeout(DR.timer);if(DR.on){DR.on=false;drMark();}});
+VR.addEventListener('contextmenu',e=>{if(e.target.closest&&e.target.closest('#text'))e.preventDefault();});
+VR.addEventListener('mousedown',e=>{if(e.button!==0||S.settings.flow)return;const w=e.target.closest&&e.target.closest('#text .w');if(!w)return;DR.md=w;DR.x=e.clientX;DR.y=e.clientY;});
+document.addEventListener('mousemove',e=>{if(!DR.md)return;if(!DR.on){if(Math.abs(e.clientX-DR.x)+Math.abs(e.clientY-DR.y)<6)return;drStart(DR.md);}drMove(e.clientX,e.clientY);});
+document.addEventListener('mouseup',()=>{DR.md=null;if(DR.on)drEnd();});
 let scrT=0;
 window.addEventListener('scroll',()=>{
   if(view!=='read')return;const tw=$('.textwrap'),bar=$('#rprog');if(!tw||!bar)return;

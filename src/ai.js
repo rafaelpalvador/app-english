@@ -250,3 +250,26 @@ function androidSay(text,o){
   return false;
 }
 function stopAndroidVoice(){try{if(inAndroid())window.GlosaAndroid.stop();}catch(e){}}
+
+/* ---------- expressões (palavras juntas) ---------- */
+function pPhraseExplain(){
+  const lg=lgOf(G.sid),txt=phraseText(G.sid,G.a,G.b);
+  return`És um tutor paciente de ${langName(lg)} para alguém cuja língua materna é ${nat()}.
+O aluno juntou estas palavras: «${txt}», na frase «${SENT[G.sid].en}» (contexto: «${ctxPara(G.sid)}»).
+Responde em ${nat()}, em texto simples sem markdown, com no máximo 100 palavras e três partes separadas por uma linha em branco:
+1) o que quer dizer aqui e se é um phrasal verb, uma expressão fixa ou só palavras soltas;
+2) outros sentidos comuns da mesma expressão, se houver;
+3) um exemplo curto e novo em ${langName(lg)}, com a tradução.`;
+}
+function phraseLookup(key,txt,sid){
+  ensureAI();if(LOOKING[key]||S.ai.d[key]||!aiProvider())return;LOOKING[key]=1;
+  askAI(`Expressão em ${langName(lgOf(sid))}: «${txt}». Frase: «${SENT[sid].en}».
+Responde só com JSON, sem texto à volta: {"pt":"tradução curta e natural para ${nat()} com o sentido nesta frase","kind":"phrasal verb, expressão idiomática, colocação ou palavras soltas"}`,{json:true})
+  .then(o=>{delete LOOKING[key];if(o&&o.pt){S.ai.d[key]={pt:String(o.pt),pos:o.kind?String(o.kind):'expressão',ipa:null};if(S.vocab[key]&&!S.vocab[key].pt)S.vocab[key].pt=String(o.pt);save();}if(G&&G.kind==='phrase')renderGloss();})
+  .catch(e=>{delete LOOKING[key];LOOKING[key+'#err']=aiErrText(e);if(G)renderGloss();});
+}
+function phraseTrHTML(key,txt,sid){
+  const src=aiProvider();
+  if(src){if(LOOKING[key+'#err'])return`<span class="muted" style="font:400 15px/1.5 var(--f-u)">${esc(LOOKING[key+'#err'])}</span>`;setTimeout(()=>phraseLookup(key,txt,sid),0);return`<span class="muted" style="font:400 15px/1.5 var(--f-u)">A traduzir com ${aiLabel(src)}…</span>`;}
+  return`<span class="muted" style="font:400 15px/1.5 var(--f-u)">Sem tradução para esta combinação. ${inClaude()?'A IA do Claude traduz quando estiver ligada.':'Adiciona uma chave grátis do Gemini em Definições → IA e voz para traduzir expressões.'}</span>`;
+}

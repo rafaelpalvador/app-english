@@ -43,7 +43,7 @@ A IA traduz palavras e frases que não estão no dicionário, explica em context
 **Ler**
 - Toca numa palavra: tradução, pronúncia, explicação em contexto (IA pré-escrita) e nota pessoal.
 - Estados das palavras: nova, a aprender (1 a 4), conhecida e ignorada, com cores no texto.
-- Expressões e phrasal verbs sublinhados; arrastar sobre várias palavras guarda uma expressão.
+- Juntar palavras como no LingQ (*put down*, *pick up*…): no telemóvel, mantém o dedo numa palavra e arrasta até à última; no computador, arrasta com o rato ou usa Shift + clique; ou usa os botões «anterior / seguinte» no painel. As expressões guardadas ficam marcadas em todos os textos, com nível e cartão próprios.
 - Percentagem de palavras conhecidas por texto, glossário "antes de ler" e leitura contínua.
 - Voz do dispositivo, frase a frase, com a palavra destacada; temas papel, sépia e noite.
 
