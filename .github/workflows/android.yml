@@ -37,23 +37,16 @@ jobs:
           echo "VERSION_NAME=$V" >> "$GITHUB_ENV"
           echo "VERSION_CODE=${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
 
-      - name: Chave de assinatura
-        env:
-          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
-        run: |
-          if [ -n "$KEYSTORE_B64" ]; then
-            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
-            echo "KEYSTORE_PATH=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
-          else
-            echo "::warning::Sem KEYSTORE_B64: o APK fica assinado com uma chave de teste e o Obtainium não o vai conseguir atualizar."
-          fi
-
       - name: Gerar APK
         working-directory: android
+        # A chave de assinatura está no próprio repositório (android/assinatura/glosa.jks),
+        # como no app de podcast: assim o APK é sempre assinado da mesma forma e o
+        # Obtainium consegue atualizá-lo, sem configurar segredos no GitHub.
         env:
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          KEYSTORE_PATH: ${{ github.workspace }}/android/assinatura/glosa.jks
+          KEYSTORE_PASSWORD: 7SgbM3y-1hRBVAH86QiLooxtHRSudA6r
+          KEY_ALIAS: glosa
+          KEY_PASSWORD: 7SgbM3y-1hRBVAH86QiLooxtHRSudA6r
         run: gradle assembleRelease --no-daemon --stacktrace
 
       - name: Dar nome ao APK

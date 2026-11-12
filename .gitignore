@@ -9,3 +9,4 @@ android/app/src/main/assets/
 android/local.properties
 *.jks
 *.keystore
+!android/assinatura/glosa.jks
