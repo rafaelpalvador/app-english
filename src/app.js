@@ -50,7 +50,7 @@ const P={
  pausei:'<circle cx="12" cy="12" r="8.5"/><path d="M10 9v6M14 9v6"/>',
  cal:'<rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>'
 };
-function I(n,s){return`<svg viewBox="0 0 24 24" width="${s||20}" height="${s||20}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[n]||''}</svg>`;}
+function I(n,s){return`<svg viewBox="0 0 24 24" width="${s||20}" height="${s||20}" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[n]||''}</svg>`;}
 const reduced=(()=>{try{return window.matchMedia('(prefers-reduced-motion: reduce)').matches;}catch(e){return false;}})();
 const wide=()=>{try{return window.matchMedia('(min-width:1180px)').matches;}catch(e){return false;}};
 
@@ -179,65 +179,43 @@ function ctxHTML(sid,surf,mode){
 }
 
 /* ---------- capas geradas ---------- */
-let CVN=0;
-function cover(id,title){
-  const r=rng(hashStr(id));let s='';const V='<svg viewBox="0 0 300 400" preserveAspectRatio="xMidYMid slice" aria-hidden="true">';
-  if(id==='t1'){
-    s+='<defs><linearGradient id="c1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1B2742"/><stop offset="1" stop-color="#36507A"/></linearGradient><radialGradient id="c1g"><stop offset="0" stop-color="#FFD43B" stop-opacity=".7"/><stop offset="1" stop-color="#FFD43B" stop-opacity="0"/></radialGradient></defs><rect width="300" height="400" fill="url(#c1)"/>';
-    s+='<circle cx="196" cy="300" r="90" fill="url(#c1g)"/><rect x="62" y="70" width="176" height="220" rx="6" fill="none" stroke="#C8D6F2" stroke-opacity=".55" stroke-width="5"/><path d="M150 70v220M62 180h176" stroke="#C8D6F2" stroke-opacity=".55" stroke-width="4"/>';
-    for(let i=0;i<46;i++){const x=r()*340-20,y=r()*420-20,l=18+r()*40;s+=`<path d="M${x.toFixed(1)} ${y.toFixed(1)}l${(l*.22).toFixed(1)} ${l.toFixed(1)}" stroke="#BFD1F5" stroke-opacity="${(.25+r()*.4).toFixed(2)}" stroke-width="1.6" stroke-linecap="round"/>`;}
-    s+='<path d="M180 300h50l-8 34h-34z" fill="#F4E7C8"/><path d="M230 308c12 0 12 18 0 18" fill="none" stroke="#F4E7C8" stroke-width="4"/><path d="M195 290c-4-8 4-12 0-20M210 292c-4-8 4-12 0-20" stroke="#F4E7C8" stroke-opacity=".6" stroke-width="2" fill="none" stroke-linecap="round"/>';
-  }else if(id==='t2'){
-    s+='<rect width="300" height="400" fill="#0C6A57"/>';
-    for(let i=14;i>=1;i--)s+=`<circle cx="150" cy="250" r="${i*24}" fill="none" stroke="#A6E8CF" stroke-opacity="${(.06+i*.025).toFixed(2)}" stroke-width="${i%3===0?3:1.4}"/>`;
-    s+='<circle cx="150" cy="250" r="16" fill="#FFE07A"/>';
-    for(let i=0;i<12;i++){const a=r()*6.28,d=40+r()*130;s+=`<circle cx="${(150+Math.cos(a)*d).toFixed(1)}" cy="${(250+Math.sin(a)*d).toFixed(1)}" r="${(2+r()*3).toFixed(1)}" fill="#FFE07A" fill-opacity=".8"/>`;}
-  }else if(id==='t3'){
-    s+='<defs><linearGradient id="c3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#070C18"/><stop offset="1" stop-color="#22324F"/></linearGradient></defs><rect width="300" height="400" fill="url(#c3)"/>';
-    for(let i=0;i<40;i++)s+=`<circle cx="${(r()*300).toFixed(1)}" cy="${(r()*200).toFixed(1)}" r="${(r()*1.3+.3).toFixed(1)}" fill="#fff" fill-opacity="${(.3+r()*.6).toFixed(2)}"/>`;
-    s+='<path d="M150 128 320 70v120z" fill="#F6C945" fill-opacity=".3"/><path d="M150 128-20 92v70z" fill="#F6C945" fill-opacity=".14"/>';
-    s+='<path d="M131 150h38l13 190h-64z" fill="#EEF1F7"/><path d="M128 190h44l2 26h-48zM124 250h52l2 26h-56z" fill="#D9473B"/><rect x="134" y="116" width="32" height="30" rx="3" fill="#F6C945"/><path d="M128 116h44l-22-20z" fill="#D9473B"/><rect x="126" y="146" width="48" height="6" fill="#0B1222"/>';
-    s+='<path d="M0 330c50-14 90-6 130 6s100 0 170-16v80H0z" fill="#050912"/>';
-    for(let i=0;i<7;i++){const y=356+i*7;s+=`<path d="M${(r()*80).toFixed(0)} ${y}h${(60+r()*120).toFixed(0)}" stroke="#4A6290" stroke-opacity=".5" stroke-width="2" stroke-linecap="round"/>`;}
-  }else if(id==='t4'){
-    s+='<rect width="300" height="400" fill="#E4552F"/>';
-    for(let i=0;i<10;i++)s+=`<rect x="${i*30}" y="0" width="15" height="92" fill="#FFF4E8"/>`;
-    for(let i=0;i<10;i++)s+=`<circle cx="${i*30+15}" cy="92" r="15" fill="${i%2?'#E4552F':'#FFF4E8'}"/>`;
-    s+='<rect x="0" y="92" width="300" height="10" fill="#B83A1E" fill-opacity=".5"/>';
-    const fc=['#FFD43B','#2F9E6B','#FFF4E8','#7A1F12','#FF9F1C'];
-    for(let row=0;row<3;row++){const y=170+row*78;s+=`<rect x="22" y="${y+22}" width="256" height="42" rx="6" fill="#8A2E14" fill-opacity=".55"/>`;for(let k=0;k<11;k++){s+=`<circle cx="${(36+k*23+r()*4).toFixed(1)}" cy="${(y+14+r()*10).toFixed(1)}" r="${(11+r()*3).toFixed(1)}" fill="${fc[Math.floor(r()*fc.length)]}"/>`;}}
-  }else if(id==='t5'){
-    s+='<rect width="300" height="400" fill="#3446F5"/>';
-    for(let i=1;i<10;i++)s+=`<path d="M0 ${i*40}h300M${i*30} 0v400" stroke="#fff" stroke-opacity=".08"/>`;
-    let d='M24 110',x=24,lvl=110,pts=[];const rev=[24,74,134,214];
-    for(let k=0;k<rev.length;k++){const x0=rev[k],x1=rev[k+1]||290,dec=(150-k*36);let first=true;for(let xx=x0;xx<=x1;xx+=4){const yy=110+dec*(1-Math.exp(-(xx-x0)/(18+k*22)));d+=(first&&k?' L':' L')+xx+' '+yy.toFixed(1);first=false;}pts.push(x0);if(k<rev.length-1)d+=' L'+(rev[k+1])+' 110';}
-    s+=`<path d="${d}" fill="none" stroke="#fff" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>`;
-    pts.forEach(px=>{s+=`<circle cx="${px}" cy="110" r="7" fill="#FFD43B" stroke="#3446F5" stroke-width="3"/>`;});
-    s+='<text x="24" y="360" font-family="Gloock,Georgia,serif" font-size="74" fill="#fff" fill-opacity=".14">1885</text>';
-  }else if(id==='rev'){
-    s+='<rect width="300" height="400" fill="#FFD43B"/>';
-    for(let i=0;i<9;i++){const y=50+i*36,w=80+r()*170;s+=`<rect x="26" y="${y}" width="${w.toFixed(0)}" height="18" rx="4" fill="#0F1728" fill-opacity="${(.1+r()*.15).toFixed(2)}"/>`;if(r()>.5)s+=`<rect x="${(30+r()*(w-60)).toFixed(0)}" y="${y-3}" width="${(40+r()*30).toFixed(0)}" height="24" rx="4" fill="#3446F5" fill-opacity=".85"/>`;}
-  }else{
-    const pal=[['#13213D','#FFD43B'],['#0C6A57','#FFE07A'],['#6B2140','#FFC7D9'],['#2A2A72','#9FB1FF'],['#3D3A33','#F2C14E']][hashStr(id)%5];
-    s+=`<rect width="300" height="400" fill="${pal[0]}"/>`;
-    for(let i=-8;i<20;i++)s+=`<path d="M${i*28} 0l220 400" stroke="${pal[1]}" stroke-opacity=".09" stroke-width="10"/>`;
-    s+=`<text x="-6" y="330" font-family="Gloock,Georgia,serif" font-size="300" fill="${pal[1]}" fill-opacity=".22">${esc((title||'?').trim().charAt(0).toUpperCase())}</text>`;
-  }
-  const u='_'+(++CVN);s=s.replace(/(id="|url\(#)(c1g|c1|c3)\b/g,'$1$2'+u);
-  return V+s+'</svg>';
+/* ---------- capas tipográficas ---------- */
+const CVP=[['#1F2B44','#ECE7DA'],['#2E4A3B','#E9EEE5'],['#6E2F2A','#F4E9E2'],['#B58C3C','#1C1810'],['#3A3D44','#ECEAE4'],['#2A5870','#E7EFF3'],['#574866','#EFEAF3'],['#CDC7B8','#23211C'],['#8C5A3C','#F5ECE3'],['#16302B','#DDE9E2']];
+const CVK={t1:0,t2:1,t3:5,t4:2,t5:3,t6:9,rev:7,es1:8,fr1:5,de1:4,ja1:6,ar1:1};
+function motif(id){
+  const S=(d)=>`<svg viewBox="0 0 100 64" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+  let d='';
+  if(id==='t1'){for(let i=0;i<9;i++){const x=6+i*11,y=6+(i%3)*8;d+=`<path d="M${x} ${y}l-4 14"/>`;}d+='<path d="M8 58h84"/><circle cx="74" cy="46" r="6"/>';}
+  else if(id==='t2'){for(let r=6;r<=36;r+=8)d+=`<path d="M${50-r} 58a${r} ${r} 0 0 1 ${2*r} 0"/>`;d+='<circle cx="50" cy="58" r="1.6" fill="currentColor"/>';}
+  else if(id==='t3'){d='<path d="M44 58l3-36h6l3 36"/><path d="M45 22h10l-5-7z"/><path d="M55 18l40-12M55 20l40 4" opacity=".7"/><path d="M4 58h92"/>';}
+  else if(id==='t4'){for(let i=0;i<6;i++){const x=6+i*15;d+=`<path d="M${x} 20a7.5 7.5 0 0 0 15 0"/>`;}d+='<path d="M6 20h90M14 28v30M88 28v30M6 58h90"/><circle cx="32" cy="50" r="4"/><circle cx="44" cy="50" r="4"/><circle cx="56" cy="50" r="4"/>';}
+  else if(id==='t5'){d='<path d="M4 58h92M4 6v52"/><path d="M8 10C16 40 22 46 30 48L30 14C38 38 46 42 56 44L56 18C66 34 76 38 92 40"/><circle cx="30" cy="14" r="2" fill="currentColor"/><circle cx="56" cy="18" r="2" fill="currentColor"/>';}
+  else if(id==='t6'){d='<path d="M4 30h30l8 8h14l10 20"/><path d="M56 58h40"/><path d="M70 24l4-6 4 6M76 22l3-4 3 4"/><circle cx="20" cy="22" r="1.4" fill="currentColor"/>';}
+  else if(id==='es1'){d='<path d="M30 30h36v12a14 14 0 0 1-14 14h-8a14 14 0 0 1-14-14z"/><path d="M66 34h6a6 6 0 0 1 0 12h-7"/><path d="M40 22c-3-4 3-6 0-10M50 22c-3-4 3-6 0-10M60 22c-3-4 3-6 0-10"/><path d="M20 60h60"/>';}
+  else if(id==='fr1'){d='<circle cx="72" cy="18" r="9"/><path d="M8 58h84M16 58V40h22v18M44 58V32l12-8 12 8v26"/>';}
+  else if(id==='de1'){d='<circle cx="34" cy="24" r="14"/><path d="M34 38v20M4 58h92"/><path d="M60 50h22M64 50v8M78 50v8"/><path d="M84 40c3 0 5 2 5 5"/>';}
+  else if(id==='ja1'){for(let i=0;i<10;i++){const x=8+i*9;d+=`<path d="M${x} ${6+(i%2)*6}v10"/>`;}d+='<path d="M36 58V40h28v18M32 40h36l-18-10z"/>';}
+  else if(id==='ar1'){d='<path d="M30 58V30a20 20 0 0 1 40 0v28"/><path d="M38 58V32a12 12 0 0 1 24 0v26"/><path d="M8 58h84"/>';}
+  else if(id==='rev'){d='<path d="M6 12h70M6 26h84M6 40h56M6 54h76"/><path d="M40 22h24" stroke-width="5" opacity=".4"/>';}
+  else{const h=hashStr(id);const a=h%3;if(a===0)d='<circle cx="50" cy="30" r="22"/><path d="M8 58h84"/>';else if(a===1)d='<path d="M8 58L50 10l42 48z"/>';else d='<rect x="24" y="8" width="52" height="50"/><path d="M24 33h52"/>';}
+  return S(d);
 }
-function coverBox(L,cls,extra){return`<div class="cover ${cls||''}">${cover(L.gid||L.id,L.book||L.title)}${extra||''}</div>`;}
+function coverBox(L,cls,extra){
+  const key=L.gid||L.id;const pi=CVK[key]!=null?CVK[key]:hashStr(key)%CVP.length;const p=CVP[pi];const t=L.book||L.title;
+  const sub=L.level==='Meu'?langName(L.lang||'en'):L.level+' · '+langName(L.lang||'en');
+  return`<div class="cover ${cls||''}" style="--cv:${p[0]};--cvi:${p[1]}"><div class="cv-in"><span class="cv-mark">${motif(key)}</span><span><span class="cv-title" dir="auto">${esc(t)}</span><span class="cv-sub" style="display:block">${esc(sub)}</span></span></div>${extra||''}</div>`;
+}
 
 /* ---------- anéis e gráficos ---------- */
 function rings(list,size){
-  const sz=size||120,c=sz/2,sw=Math.max(5,Math.round(sz*.08)),step=sw+Math.max(2,Math.round(sw*.4));let s=`<svg width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}" role="img" aria-label="Metas de hoje">`;
+  const sz=size||120,c=sz/2,sw=Math.max(2.5,Math.round(sz*.035*10)/10),step=sw+Math.max(5,Math.round(sz*.06));let s=`<svg width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}" role="img" aria-label="Metas de hoje">`;
   list.forEach((it,i)=>{const r=c-sw/2-1-i*step,C=2*Math.PI*r,p=Math.max(0,Math.min(1,it.p));
     s+=`<circle cx="${c}" cy="${c}" r="${r}" fill="none" style="stroke:var(--line)" stroke-width="${sw}"/>`;
     s+=`<circle cx="${c}" cy="${c}" r="${r}" fill="none" style="stroke:${it.c}" stroke-width="${sw}" stroke-linecap="round" stroke-dasharray="${(C*p).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 ${c} ${c})"/>`;});
   return s+'</svg>';
 }
-function ring1(p,size,color,inner){const sz=size||140,c=sz/2,r=c-9,C=2*Math.PI*r;return`<div class="ring-wrap"><svg width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}" aria-hidden="true"><circle cx="${c}" cy="${c}" r="${r}" fill="none" style="stroke:var(--line)" stroke-width="10"/><circle cx="${c}" cy="${c}" r="${r}" fill="none" style="stroke:${color||'var(--accent)'}" stroke-width="10" stroke-linecap="round" stroke-dasharray="${(C*Math.max(0,Math.min(1,p))).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 ${c} ${c})"/></svg><div class="c">${inner||''}</div></div>`;}
-function goals(){const t=S.days[TD()]||{w:0,l:0,r:0};const g=S.settings.goal;return[{k:'Ler',v:t.w,g:g.r,u:'palavras',c:'var(--accent)'},{k:'Ouvir',v:t.l,g:g.l,u:'min',c:'#E2581B'},{k:'Rever',v:t.r,g:g.c,u:'cartões',c:'var(--known)'}];}
+function ring1(p,size,color,inner){const sz=size||140,c=sz/2,r=c-9,C=2*Math.PI*r;return`<div class="ring-wrap"><svg width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}" aria-hidden="true"><circle cx="${c}" cy="${c}" r="${r}" fill="none" style="stroke:var(--line)" stroke-width="3"/><circle cx="${c}" cy="${c}" r="${r}" fill="none" style="stroke:${color||'var(--ink)'}" stroke-width="3" stroke-linecap="round" stroke-dasharray="${(C*Math.max(0,Math.min(1,p))).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 ${c} ${c})"/></svg><div class="c">${inner||''}</div></div>`;}
+function goals(){const t=S.days[TD()]||{w:0,l:0,r:0};const g=S.settings.goal;return[{k:'Ler',v:t.w,g:g.r,u:'palavras',c:'var(--ink)'},{k:'Ouvir',v:t.l,g:g.l,u:'min',c:'var(--accent)'},{k:'Rever',v:t.r,g:g.c,u:'cartões',c:'#C79A2B'}];}
 function fmt(n){return(Math.round(n*10)/10).toLocaleString('pt-PT');}
 function spark(vals,w,h){
   const mx=Math.max.apply(null,vals.concat([1])),mn=0;const pts=vals.map((v,i)=>[i*(w/(vals.length-1)),h-3-((v-mn)/(mx-mn||1))*(h-8)]);
@@ -263,11 +241,7 @@ function renderNav(){
   $('#rail-lang').innerHTML=`${I('globe',18)}<span class="grow">${esc(langName(tl()))}</span><span class="lcode">${esc(tl().toUpperCase())}</span>`;$('#tb-lang').textContent=tl().toUpperCase();
   $('#rnav').innerHTML=NAV.map((n,i)=>`${i===5?'<div class="sep"></div>':''}<button data-nav="${n[0]}" aria-current="${view===n[0]?'page':'false'}">${I(n[2])}<span>${n[1]}</span>${n[0]==='review'&&due?`<span class="badge">${due}</span>`:''}</button>`).join('');
   $('#tabbar').innerHTML=TABS.map(k=>{const n=NAV.find(x=>x[0]===k);return`<button data-nav="${k}" aria-current="${view===k?'page':'false'}"><span class="ti">${I(n[2],21)}</span>${n[1]}${k==='review'&&due?`<span class="badge">${due}</span>`:''}</button>`;}).join('');
-  const wkd=weekWords();
-  const g=goals();
-  $('#rail-foot').innerHTML=`<div class="rcard"><div class="t">Esta semana</div><div class="big">${Math.round(wkd.now).toLocaleString('pt-PT')} <span style="font:500 13px var(--f-u);color:var(--rail-muted)">palavras</span></div><div style="margin-top:12px">${weekBars(wkd.days,40,'#FFD43B','var(--rail-line)')}</div></div>
-  <div class="rcard row" style="flex-wrap:nowrap;gap:12px">${rings(g.map(x=>({p:x.v/x.g,c:x.c})),64)}<div style="font-size:12.5px;color:var(--rail-muted);display:grid;gap:2px">${g.map(x=>`<span><b style="color:#fff">${fmt(x.v)}</b>/${x.g} ${x.u}</span>`).join('')}</div></div>
-  <button class="rail-set" data-open-settings>${I('gear')}Definições</button>`;
+  $('#rail-foot').innerHTML=`<button class="rail-set" data-open-settings aria-label="Definições" title="Definições">${I('gear',19)}</button>`;
   $('#tb-prog').innerHTML=I('chart');$('#tb-words').innerHTML=I('words');$('#tb-set').innerHTML=I('gear');
 }
 function updateChrome(){renderNav();}
@@ -317,7 +291,7 @@ function renderHome(){
     <article class="card span-2"><div class="row between"><h3>Metas de hoje</h3><span class="chip ${done===3?'ok':''}">${done}/3</span></div><div class="rings" style="margin-top:14px">${rings(g.map(x=>({p:x.v/x.g,c:x.c})),112)}<div class="gl grow">${g.map(x=>`<div><i class="sw" style="background:${x.c};border-radius:50%"></i>${x.k}<b>${fmt(x.v)}<span class="muted" style="font-weight:400">/${x.g}</span></b></div>`).join('')}</div></div></article>
     <article class="card due-card span-2"><div class="deck" aria-hidden="true"><i></i><i></i><i></i></div><div class="eyebrow muted">Para rever hoje</div><div class="n tnum" style="margin-top:12px">${due}</div><p class="muted" style="margin:6px 0 16px;max-width:24ch">${due?'Cartões com as frases onde encontraste cada palavra.':'Tudo em dia. Volta amanhã.'}</p><button class="btn" data-nav="review" ${due?'':'disabled'}>${I('cards',18)} Rever agora</button></article>
     <article class="card wod span-2">${wod}</article>
-    <article class="card span-2"><div class="eyebrow">Esta semana</div><div class="row" style="gap:8px;margin-top:10px;align-items:baseline"><span style="font:400 48px/1 var(--f-d)" class="tnum">${Math.round(wk.now).toLocaleString('pt-PT')}</span><span class="muted">palavras lidas</span></div><p class="muted" style="font-size:13px;margin-top:6px">${wk.prev?`Semana passada: ${Math.round(wk.prev).toLocaleString('pt-PT')}.`:'Primeira semana.'}</p><div style="margin-top:14px;color:var(--muted)">${weekBars(wk.days,56,'var(--accent)','var(--line)')}</div><button class="btn sm" data-nav="prog" style="margin-top:16px">${I('chart',16)} Ver progresso</button></article>
+    <article class="card span-2"><div class="eyebrow">Esta semana</div><div class="row" style="gap:8px;margin-top:10px;align-items:baseline"><span style="font:400 48px/1 var(--f-d)" class="tnum">${Math.round(wk.now).toLocaleString('pt-PT')}</span><span class="muted">palavras lidas</span></div><p class="muted" style="font-size:13px;margin-top:6px">${wk.prev?`Semana passada: ${Math.round(wk.prev).toLocaleString('pt-PT')}.`:'Primeira semana.'}</p><div style="margin-top:14px;color:var(--muted)">${weekBars(wk.days,56,'var(--ink)','var(--line)')}</div><button class="btn sm" data-nav="prog" style="margin-top:16px">${I('chart',16)} Ver progresso</button></article>
   </div>
   ${recs.length?`<div class="sec-h"><h2>Para o teu nível</h2><button class="btn sm" data-nav="lib">Biblioteca ${I('arrow',16)}</button></div>
   <div class="mini-list">${recs.map(x=>`<button class="card mini flat" data-lesson="${x.L.id}">${coverBox(x.L)}<div style="display:grid;gap:6px;min-width:0"><span class="eyebrow">${esc(x.L.level)} · ${esc(x.L.tag)}</span><h4>${esc(x.L.title)}</h4><div class="row between" style="font-size:12.5px"><b>${x.s.pct}% conhecidas</b><span class="muted">${x.s.newTypes} novas</span></div>${meterHTML(x.s,true)}</div></button>`).join('')}</div>`:''}
@@ -966,6 +940,7 @@ function renderProg(){
       <div style="margin-top:22px"><div class="row between"><span class="eyebrow">Palavras a aprender por nível</span><span class="muted tnum" style="font-size:12.5px">${learn.length}</span></div><div class="meter" style="height:14px;margin-top:10px">${cnt.map((n,i)=>`<i style="width:${(n/tot*100).toFixed(1)}%;background:var(--hl${i+1})"></i>`).join('')}</div><div class="legend" style="margin-top:8px">${cnt.map((n,i)=>`<span><i class="sw" style="background:var(--hl${i+1})"></i>Nível ${i+1}: ${n}</span>`).join('')}</div></div></div>
     ${progExtra()}
   </div></div>`;
+  let col=0;$$('#v-prog .pgrid>.card').forEach(c=>{if(c.classList.contains('pspan')){col=0;return;}c.classList.add(col?'pr':'pl');col^=1;});
 }
 
 /* =========================================================
