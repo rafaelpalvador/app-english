@@ -10,6 +10,15 @@ Abre o `index.html` num navegador (Chrome, Edge, Firefox ou Safari recentes). N�
 
 Os dados ficam guardados no navegador (localStorage). Usa **Definições → Cópia de segurança** para os levar para outro dispositivo.
 
+## App Android (Obtainium)
+
+O Glosa também é uma app Android. O GitHub gera o APK sozinho (Actions → «Android APK») e publica-o nas Releases sempre que é enviada uma etiqueta `vX.Y.Z`.
+
+- **Obtainium:** adiciona `https://github.com/rafaelpalvador/app-ingles`. O Obtainium instala a versão mais recente e avisa-te das novas.
+- **Assinatura:** o APK é assinado com a chave guardada nos segredos do repositório (`KEYSTORE_B64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`). Usa sempre a mesma chave; com outra, o Android recusa as atualizações.
+- Na app, a IA funciona com a chave do Gemini e a voz usa o motor de texto para voz do Android.
+- O código está em `android/`. A app abre o `index.html` e acrescenta a voz do Android, a escolha de ficheiros e a gravação nas Transferências.
+
 ## IA e voz
 
 O app escolhe sozinho a melhor opção disponível:
@@ -70,6 +79,7 @@ src/
   import.js      importação de ficheiros e cópia de segurança
   ai.js          IA (Claude ou Gemini), vozes do Claude, ditado e downloads
   boot.js        arranque
+android/         app Android (WebView) e .github/workflows/android.yml (gera o APK)
 build.js         junta tudo em index.html
 index.html       o app pronto a abrir
 tests/           testes no navegador (Playwright) e ficheiros de exemplo

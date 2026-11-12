@@ -594,6 +594,7 @@ function pickVoice(lg){lg=lg||'en';if(lg!=='en'){const vs=voicesFor(lg);const pr
 function say(text,o){
   o=o||{};
   if(useClaudeVoice())return claudeSay(text,o);
+  if(inAndroid())return androidSay(text,o);
   try{
     if(!('speechSynthesis' in window))throw new Error('no tts');
     const lg=o.lang||tl();const u=new SpeechSynthesisUtterance(text);u.lang=BCP[lg]||lg;u.rate=o.rate||S.settings.rate||1;const v=pickVoice(lg);if(v)u.voice=v;else if(lg!=='en'&&ALLV.length&&!o.quiet)toast('Este dispositivo não tem voz para '+langName(lg).toLowerCase()+'. Instala uma nas definições do sistema.');

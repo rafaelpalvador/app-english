@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ícone: linhas de texto com uma palavra marcada a amarelo -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#F4D35E" android:pathData="M44,50.5h22v7h-22z" />
+    <path android:fillColor="#F7F7F4" android:pathData="M34,40h40v2.4h-40z" />
+    <path android:fillColor="#F7F7F4" android:pathData="M34,53.8h40v2.4h-40z" />
+    <path android:fillColor="#F7F7F4" android:pathData="M34,67.6h26v2.4h-26z" />
+    <path android:fillColor="#93A3FF" android:pathData="M64,68.8m-2.2,0a2.2,2.2 0,1 1,4.4 0a2.2,2.2 0,1 1,-4.4 0" />
+</vector>

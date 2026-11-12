@@ -167,7 +167,7 @@ function claudeSay(text,o){
   });
   return true;
 }
-function stopClaudeVoice(){try{if(CAP.tts)CAP.tts.stop();}catch(e){}}
+function stopClaudeVoice(){try{if(CAP.tts)CAP.tts.stop();}catch(e){}stopAndroidVoice();}
 
 /* ---------- ditado ---------- */
 var DICT_ON=false;
@@ -180,8 +180,9 @@ function startDictation(onFinal,onState){
 function stopDictation(){try{if(CAP.dict)return CAP.dict.stop();}catch(e){}return Promise.resolve();}
 
 /* ---------- downloads ---------- */
-function canDownload(){return !!CAP.dl||!inClaude();}
+function canDownload(){return !!CAP.dl||!inClaude()||inAndroid();}
 function saveFile(name,data){
+  if(inAndroid()){let r='error';try{r=window.GlosaAndroid.save(name,String(data));}catch(e){}toast(r==='ok'?'Guardado em Transferências':r==='shared'?'Escolhe onde guardar':'Não foi possível guardar o ficheiro.',r==='ok'?'check':null);return;}
   if(CAP.dl){CAP.dl.save({filename:name,data:data}).then(()=>toast('Ficheiro guardado','check'),e=>{if(e&&(e.code==='declined'))return;toast('Não foi possível descarregar aqui.');});return;}
   try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:'text/plain'}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);}catch(e){toast('Não foi possível descarregar aqui.');}
 }
@@ -190,7 +191,7 @@ function saveFile(name,data){
 function aiSettingsHTML(){
   const s=S.settings,src=aiProvider(),ic=inClaude();
   const aiState=src==='claude'?['Claude','Ligada · traduções, explicações, perguntas e correções reais','ok']:src==='gemini'?['Gemini','Ligada com a tua chave','ok']:[ic?'A ligar ao Claude…':'Sem IA',ic?(AI_DENIED?'Não deste acesso. Ativa-a nas definições do Claude.':'Pode demorar alguns segundos.'):'Respostas de exemplo. Adiciona uma chave grátis do Gemini abaixo.',''];
-  const vState=useClaudeVoice()?['Voz do Claude','4 vozes naturais, em várias línguas','ok']:['Voz do dispositivo',CAP.tts?'Escolheste a voz do dispositivo':'As vozes do Claude não estão disponíveis aqui (Safari e apps móveis).',''];
+  const vState=useClaudeVoice()?['Voz do Claude','4 vozes naturais, em várias línguas','ok']:inAndroid()?['Voz do Android','Instala mais vozes em Definições → Sistema → Idiomas → Texto para voz.','ok']:['Voz do dispositivo',CAP.tts?'Escolheste a voz do dispositivo':'As vozes do Claude não estão disponíveis aqui (Safari e apps móveis).',''];
   return`<div class="set-sec"><h3>IA e voz</h3>
   <div class="src"><span class="si">${I('spark')}</span><span class="grow"><b>IA: ${esc(aiState[0])}</b><small>${esc(aiState[1])}</small></span>${aiState[2]?`<span class="chip ok">${I('check',14)} Ativa</span>`:''}</div>
   <div class="src"><span class="si">${I('spk')}</span><span class="grow"><b>${esc(vState[0])}</b><small>${esc(vState[1])}</small></span>${vState[2]?`<span class="chip ok">${I('check',14)} Ativa</span>`:''}</div>
@@ -233,3 +234,19 @@ function sentTrHTML(sid,small){
   if(src){setTimeout(()=>translateSent(sid),0);return`<span class="muted" style="font:400 ${small?14:15}px/1.5 var(--f-u)">${I('spark',14)} A traduzir com ${aiLabel(src)}…</span>`;}
   return`<span class="muted" style="font:400 ${small?14:15}px/1.5 var(--f-u)">Sem tradução para esta frase. ${inClaude()?'A IA do Claude traduz quando estiver ligada.':'Adiciona uma chave do Gemini em Definições → IA e voz.'}</span>`;
 }
+
+/* ---------- app Android (window.GlosaAndroid) ---------- */
+var TTSN=0,TTSCB={};
+function inAndroid(){try{return !!window.GlosaAndroid;}catch(e){return false;}}
+window.__glosaTTS=function(id,st){const o=TTSCB[id];delete TTSCB[id];if(!o)return;if(st==='done'){if(o.end)o.end();}else if(o.err)o.err();};
+function androidSay(text,o){
+  const lg=o.lang||tl();const id='u'+(++TTSN);TTSCB[id]=o;
+  let r='error';try{r=window.GlosaAndroid.speak(String(text),BCP[lg]||lg,Math.max(.5,Math.min(2,o.rate||S.settings.rate||1)),id);}catch(e){}
+  if(r==='ok')return true;
+  delete TTSCB[id];
+  if(r==='nolang')toast('O Android não tem voz para '+langName(lg).toLowerCase()+'. Instala-a em Definições → Sistema → Idiomas → Texto para voz.');
+  else if(r==='loading')toast('A voz ainda está a carregar. Tenta outra vez.');
+  else toast('A voz não está disponível.');
+  return false;
+}
+function stopAndroidVoice(){try{if(inAndroid())window.GlosaAndroid.stop();}catch(e){}}
