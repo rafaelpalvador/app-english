@@ -14,7 +14,7 @@ Os dados ficam guardados no navegador (localStorage). Usa **Definições → Có
 
 O Glosa também é uma app Android. O GitHub gera o APK sozinho (Actions → «Android APK») e publica-o nas Releases sempre que é enviada uma etiqueta `vX.Y.Z`.
 
-- **Obtainium:** adiciona `https://github.com/rafaelpalvador/app-ingles`. O Obtainium instala a versão mais recente e avisa-te das novas.
+- **Obtainium:** adiciona `https://github.com/rafaelpalvador/app-english`. O Obtainium instala a versão mais recente e avisa-te das novas.
 - **Assinatura:** o APK é assinado com a chave guardada nos segredos do repositório (`KEYSTORE_B64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`). Usa sempre a mesma chave; com outra, o Android recusa as atualizações.
 - Na app, a IA funciona com a chave do Gemini e a voz usa o motor de texto para voz do Android.
 - O código está em `android/`. A app abre o `index.html` e acrescenta a voz do Android, a escolha de ficheiros e a gravação nas Transferências.
