@@ -1,10 +1,11 @@
-# Gera o APK do Glosa e publica-o numa Release (usado pelo Obtainium).
-# Corre quando é enviada uma etiqueta vX.Y.Z, ou à mão em Actions → "Android APK".
+# Gera o APK do Glosa e publica-o numa Release (usada pelo Obtainium).
+# Corre a cada atualização do ramo main (exceto textos e testes), ou à mão em Actions → "Android APK".
 name: Android APK
 
 on:
   push:
-    tags: ['v*']
+    branches: [main]
+    paths-ignore: ['**.md', 'tests/**']
   workflow_dispatch:
 
 permissions:
@@ -33,8 +34,7 @@ jobs:
 
       - name: Versão
         run: |
-          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then V="${GITHUB_REF_NAME#v}"; else V="0.0.${GITHUB_RUN_NUMBER}"; fi
-          echo "VERSION_NAME=$V" >> "$GITHUB_ENV"
+          echo "VERSION_NAME=1.0.${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
           echo "VERSION_CODE=${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
 
       - name: Gerar APK
@@ -58,8 +58,10 @@ jobs:
           path: glosa-*.apk
 
       - name: Publicar a Release
-        if: github.ref_type == 'tag'
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: v${{ env.VERSION_NAME }}
+          name: Glosa ${{ env.VERSION_NAME }}
+          target_commitish: ${{ github.sha }}
           files: glosa-*.apk
           generate_release_notes: true
