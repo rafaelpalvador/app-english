@@ -55,10 +55,13 @@ function pauseHTML(){
 
 /* ---------- progresso: novos gráficos ---------- */
 const CEFR=[[0,'A1'],[500,'A2'],[1000,'B1'],[2000,'B2'],[4000,'C1'],[8000,'C2']];
-const GROW=()=>{const k=knownCount();return tl()==='en'?[470,505,538,561,590,612,628,k]:[.55,.62,.68,.74,.8,.87,.94,1].map(f=>Math.round(k*f));};
+/* palavras conhecidas por semana (8 semanas), a partir dos registos diários; null = ainda sem registo */
+const GROW=()=>{const t=TD(),h=(S.kh&&S.kh[tl()])||{};const days=Object.keys(h).map(Number).sort((a,b)=>a-b);const out=[];
+  for(let w=7;w>=0;w--){const d=t-w*7;if(w===0){out.push(knownCount());continue;}let v=null;days.forEach(x=>{if(x<=d)v=h[x];});out.push(v);}return out;};
 function etaHTML(){
   const k=knownCount();let idx=0;CEFR.forEach((x,i)=>{if(k>=x[0])idx=i;});const nx=CEFR[idx+1];if(!nx)return'';
-  const g=GROW();const rate=Math.max(1,(g[g.length-1]-g[0])/(g.length-1));const wk=Math.ceil((nx[0]-k)/rate);
+  const g=GROW();const fi=g.findIndex(v=>v!=null);if(fi<0||fi>=g.length-2)return`<div class="eta"><span class="muted">A previsão do próximo nível aparece depois de duas semanas de uso.</span></div>`;
+  const rate=(g[g.length-1]-g[fi])/(g.length-1-fi);if(rate<=0)return`<div class="eta"><span class="muted">Marca palavras como conhecidas para veres quando chegas a ${nx[1]}.</span></div>`;const wk=Math.ceil((nx[0]-k)/rate);
   const d=new Date((TD()+wk*7)*DAY);
   return`<div class="eta"><span class="si">${I('target')}</span><span><b>${nx[1]} em cerca de ${wk} semanas</b><br><span class="muted" style="font-size:13px">Ao teu ritmo de ~${Math.round(rate)} palavras novas por semana, por volta de ${MO[d.getUTCMonth()]} de ${d.getUTCFullYear()}.</span></span></div>`;
 }
@@ -115,7 +118,7 @@ function mistakesHTML(){
 function progExtra(){
   const f=forecastChart(),fc=forgetCurve();
   return`<div class="card"><div class="row between"><h3>Revisões nos próximos 7 dias</h3><span class="chip">${f.total} cartões</span></div><p class="muted" style="font-size:13px;margin:4px 0 12px">${f.peak===0?'O dia mais carregado é hoje.':'O dia mais carregado é '+(f.peak===1?'amanhã':WD[dow(TD()+f.peak)])+'.'} Inclui cartões em atraso.</p>${f.svg}</div>
-  <div class="card"><div class="row between"><h3>A tua curva de esquecimento</h3><span class="chip">${fc.tot} revisões</span></div><p class="muted" style="font-size:13px;margin:4px 0 12px">Quantas palavras lembras, conforme o tempo desde a última revisão. A tracejado: a curva original de Ebbinghaus, sem revisões.</p>${fc.svg}<p class="muted" style="font-size:12.5px;margin-top:8px">Mesmo depois de 15+ dias lembras ${fc.last}%. Sem revisões, a curva de 1885 ficava perto de 21%.</p></div>
+  <div class="card"><div class="row between"><h3>A tua curva de esquecimento</h3><span class="chip">${fc.tot} revisões</span></div><p class="muted" style="font-size:13px;margin:4px 0 12px">Quantas palavras lembras, conforme o tempo desde a última revisão. A tracejado: a curva original de Ebbinghaus, sem revisões.</p>${fc.tot?fc.svg:'<p class="muted" style="padding:20px 0">Ainda não há revisões suficientes. A curva aparece à medida que revês cartões.</p>'}${fc.tot?'':'<!--'}<p class="muted" style="font-size:12.5px;margin-top:8px">Mesmo depois de 15+ dias lembras ${fc.last}%. Sem revisões, a curva de 1885 ficava perto de 21%.</p>${fc.tot?'':'-->'}</div>
   <div class="card"><h3>Vocabulário por tema</h3><p class="muted" style="font-size:13px;margin:4px 0 14px">Palavras dos textos agrupadas por tema: conhecidas, a aprender e novas.</p><div style="display:grid;gap:12px">${themesHTML()}</div></div>
   ${langsCard()}
   <div class="card"><h3>Onde falhas mais</h3><p class="muted" style="font-size:13px;margin:4px 0 14px">Erros nas revisões, por tipo de palavra.</p>${mistakesHTML()}</div>`;
@@ -132,7 +135,7 @@ function reportModal(){
   const added=Object.keys(S.vocab).filter(k=>S.vocab[k].added&&inM(S.vocab[k].added)).length;
   const texts=Object.keys(S.texts).filter(k=>inM(S.texts[k])).length;
   const hard=Object.keys(S.vocab).filter(k=>S.vocab[k].srs&&S.vocab[k].srs.lapses).sort((a,b)=>S.vocab[b].srs.lapses-S.vocab[a].srs.lapses).slice(0,5);
-  const gr=GROW();const gained=gr[gr.length-1]-gr[3];const mn=MO[m];
+  const gr=GROW();const gained=gr[3]!=null?Math.max(0,gr[gr.length-1]-gr[3]):0;const mn=MO[m];
   const txt=`Glosa · relatório de ${mn} ${y}\nPalavras lidas: ${Math.round(w)}\nMinutos a ouvir: ${Math.round(l)}\nCartões revistos: ${Math.round(r)}\nDias com atividade: ${act}\nPalavras novas guardadas: ${added}\nPalavras conhecidas: ${knownCount()} (+${gained} em 4 semanas)\nTextos terminados: ${texts}\nMais difíceis: ${hard.map(label).join(', ')||'—'}`;
   setModal(`<div class="mhead"><div><div class="eyebrow">Relatório mensal</div><h2 style="margin-top:6px;text-transform:capitalize">${mn} ${y}</h2></div><button class="ibtn" data-close aria-label="Fechar">${I('x')}</button></div>
   <div class="rep-grid">${[[Math.round(w).toLocaleString('pt-PT'),'palavras lidas'],[Math.round(l),'minutos a ouvir'],[Math.round(r),'cartões revistos'],[act,'dias com atividade'],['+'+gained,'palavras conhecidas'],[added,'palavras guardadas']].map(x=>`<div class="stat"><div class="n tnum" style="font-size:32px">${x[0]}</div><div class="l">${x[1]}</div></div>`).join('')}</div>
@@ -285,3 +288,32 @@ document.addEventListener('click',e=>{
   if(b){const lg=b.dataset.setlang;setLang(lg);closeModal();toast('A aprender: '+langName(lg),'globe');go(['prog','words','review','practice'].indexOf(view)>=0?view:'lib');return;}
   const h=e.target.closest('[data-h2="langs"]');if(h)langModal();
 });
+
+/* =========================================================
+   COMEÇAR DO ZERO / DADOS DE EXEMPLO
+   ========================================================= */
+function resetModal(){
+  const nImp=(S.imported||[]).length;
+  setModal(`<div class="mhead"><div><div class="eyebrow">Os teus dados</div><h2 style="margin-top:6px">Começar do zero</h2></div><button class="ibtn" data-close aria-label="Fechar">${I('x')}</button></div>
+  <p>Isto apaga, neste ${inAndroid()?'telemóvel':'navegador'}:</p>
+  <ul class="muted" style="margin:-6px 0 0;padding-left:18px;display:grid;gap:4px;font-size:14px"><li>palavras e expressões marcadas</li><li>cartões e histórico de revisões</li><li>textos lidos, metas e estatísticas</li></ul>
+  ${nImp?`<label class="tog" style="padding:12px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)"><span>Manter os ${nImp} ${nImp===1?'texto importado':'textos importados'}</span><span class="sw-t"><input type="checkbox" id="rs-keep" checked aria-label="Manter os textos importados"><span></span></span></label>`:''}
+  <p class="muted" style="font-size:13px">As definições, o tema, a língua e a chave da IA mantêm-se. Se quiseres guardar uma cópia antes, usa a Cópia de segurança.</p>
+  <div class="row" style="justify-content:flex-end"><button class="btn" data-close>Cancelar</button><button class="btn pri" id="rs-ok" style="background:var(--bad);border-color:var(--bad);color:#fff">Apagar e começar do zero</button></div>`,'Começar do zero');
+  $('#rs-ok').onclick=()=>{const k=$('#rs-keep');doReset(!k||k.checked);};
+}
+function doReset(keepImported){
+  const n=defaults();n.settings=S.settings;n.ai=S.ai;
+  if(keepImported)n.imported=S.imported||[];
+  else for(let i=LESSONS.length-1;i>=0;i--){if(LESSONS[i].imp)LESSONS.splice(i,1);}
+  for(let i=LESSONS.length-1;i>=0;i--){if(LESSONS[i].id==='rev')LESSONS.splice(i,1);}
+  S=n;const own=lessonsOf(tl());cur=own.length?own[0].id:'t1';S.last=cur;G=null;
+  if(typeof PR!=='undefined'){PR.sid=null;PR.res=null;PR.ai=null;PR.val='';}
+  R.phase='start';save();closeModal();go('home');toast('Começaste do zero','check');
+}
+function demoModal(){
+  setModal(`<div class="mhead"><div><div class="eyebrow">Os teus dados</div><h2 style="margin-top:6px">Ver com dados de exemplo</h2></div><button class="ibtn" data-close aria-label="Fechar">${I('x')}</button></div>
+  <p>Preenche o Glosa com palavras, cartões e três meses de estatísticas inventadas, para veres como fica com uso. <b>Substitui os teus dados atuais</b>; os textos importados mantêm-se.</p>
+  <div class="row" style="justify-content:flex-end"><button class="btn" data-close>Cancelar</button><button class="btn pri" id="dm-ok">Carregar exemplo</button></div>`,'Dados de exemplo');
+  $('#dm-ok').onclick=()=>{const n=demoData();n.settings=S.settings;n.ai=S.ai;n.imported=S.imported||[];S=n;cur='t1';G=null;save();closeModal();go('home');toast('Dados de exemplo carregados');};
+}

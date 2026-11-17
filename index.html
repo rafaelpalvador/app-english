@@ -169,6 +169,8 @@ kbd{font:500 10.5px var(--f-u);padding:1px 5px;border-radius:3px;border:1px soli
 .cover .done{position:absolute;top:8px;right:8px;height:22px;padding:0 8px;font-size:10.5px;background:var(--surface);color:var(--known);border-color:transparent}
 
 /* ============ HOJE ============ */
+.demo-bar{display:flex;gap:14px 24px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-top:32px;padding:16px 0 16px 18px;border-left:2px solid #D9B13B;font-size:14px;color:var(--ink-2)}
+.demo-bar b{color:var(--ink);font-weight:600}
 .home-grid{display:grid;gap:0;grid-template-columns:1fr;margin-top:44px;border-top:1px solid var(--line)}
 .home-grid>.card{border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent;padding:28px 0}
 @media (min-width:760px){
@@ -1327,7 +1329,11 @@ function hashStr(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt
 
 /* ---------- estado ---------- */
 const KEY='glosa-v2';
-function defaults(){
+function baseSettings(){return{flow:false,fs:20,lh:1.95,rtheme:'paper',hl:'all',rate:1,voice:'',expr:true,sbtn:true,theme:'auto',goal:{r:250,l:10,c:20},engine:'deepl',llm:'gemini',prio:true};}
+/* estado inicial: vazio, sem dados de exemplo */
+function defaults(){return{vocab:{},days:{},texts:{},pos:{},imported:[],last:'t1',pend:{},log:[],kh:{},settings:baseSettings()};}
+/* dados de exemplo, só quando a pessoa os pede (Definições → Os teus dados) */
+function demoData(){
   const t=TD(),days={},r=rng(11);
   for(let o=104;o>=1;o--){
     const x=r();
@@ -1345,8 +1351,9 @@ function defaults(){
       'phrase:little by little':{st:2,phrase:true,pt:'pouco a pouco',ctx:{sid:'t2s7',surf:'Little by little'},srs:{ivl:1,ease:2.5,reps:1,lapses:0,due:t},added:t-2},
       mistake:{st:5},afraid:{st:5},process:{st:5},notice:{st:5}
     },
-    days:days,texts:{t2:t-3},pos:{t1:0.36},imported:[],last:'t1',pend:{},log:seedLog(t),
-    settings:{flow:false,fs:20,lh:1.95,rtheme:'paper',hl:'all',rate:1,voice:'',expr:true,sbtn:true,theme:'auto',goal:{r:250,l:10,c:20},engine:'deepl',llm:'gemini',prio:true}
+    days:days,texts:{t2:t-3},pos:{t1:0.36},imported:[],last:'t1',pend:{},log:seedLog(t),demo:true,base:640,
+    kh:{en:(()=>{const o={};[470,505,538,561,590,612,628].forEach((v,i)=>{o[t-(7-i)*7]=v;});return o;})()},
+    settings:baseSettings()
   };
 }
 function seedLog(t){
@@ -1361,10 +1368,12 @@ function load(){
     const raw=localStorage.getItem(KEY);
     if(raw){const o=JSON.parse(raw);Object.assign(d,o);d.settings=Object.assign(defaults().settings,o.settings||{});d.settings.goal=Object.assign(defaults().settings.goal,(o.settings&&o.settings.goal)||{});}
   }catch(e){}
+  // dados de exemplo gravados por versões antigas da app
+  if(d.demo===undefined&&Array.isArray(d.log)&&d.log.length>=200&&d.vocab.decide&&d.vocab.decide.ctx&&d.vocab.decide.ctx.sid==='t1s1'){d.demo=true;d.base=640;}
   return d;
 }
 let S=load();
-function save(){try{if(S.log&&S.log.length>3000)S.log=S.log.slice(-3000);localStorage.setItem(KEY,JSON.stringify(S));return true;}catch(e){return false;}}
+function save(){try{if(S.log&&S.log.length>3000)S.log=S.log.slice(-3000);try{const lg=tl();S.kh=S.kh||{};(S.kh[lg]=S.kh[lg]||{})[TD()]=knownCount();}catch(e){}localStorage.setItem(KEY,JSON.stringify(S));return true;}catch(e){return false;}}
 function logDay(k,n){const t=TD();const v=S.days[t]||(S.days[t]={w:0,l:0,r:0});v[k]=(v[k]||0)+n;save();updateChrome();}
 function active(d){const v=S.days[d];return !!(v&&(v.w>0||v.l>0||v.r>0));}
 function weekWords(){const t=TD(),wd=(dow(t)+6)%7;let a=0,b=0;const days=[];for(let o=wd;o>=0;o--){const v=(S.days[t-o]||{w:0}).w;a+=v;days.push(v);}while(days.length<7)days.push(null);for(let o=wd+7;o>=7;o--)b+=(S.days[t-o]||{w:0}).w;return{now:a,prev:b,days:days};}
@@ -1416,7 +1425,7 @@ function lessonLemmas(id){const o={};const L=lessonById(id);if(!L)return o;sents
 function meterHTML(st,thin){const p=x=>st.tot?(x/st.tot*100).toFixed(1):0;return`<div class="meter${thin?' thin':''}" role="img" aria-label="${st.pct}% das palavras conhecidas"><i class="m-k" style="width:${p(st.k)}%"></i><i class="m-l" style="width:${p(st.lr)}%"></i><i class="m-n" style="width:${p(st.nw)}%"></i></div>`;}
 function diffLabel(p){return p>=95?'Fácil para ti':p>=88?'Nível ideal':p>=80?'Desafiante':'Difícil por agora';}
 function minutes(st){return Math.max(1,Math.round(st.tot/110));}
-function knownCount(){const lg=tl();const n=Object.keys(S.vocab).filter(l=>S.vocab[l].st===5&&!isBasic(l)&&!S.vocab[l].phrase&&inLang(l)).length;return lg==='en'?640+n:Object.keys(BASICX[lg]||{}).length+n;}
+function knownCount(){const lg=(S.settings&&S.settings.lang)||'en';const n=Object.keys(S.vocab).filter(l=>S.vocab[l].st===5&&!isBasic(l)&&!S.vocab[l].phrase&&langOfKey(l)===lg).length;return(lg==='en'&&S.base?S.base:0)+n;}
 function learningList(){return Object.keys(S.vocab).filter(l=>{const v=S.vocab[l];return v.st>=1&&v.st<=4&&inLang(l);});}
 function dueList(){
   const t=TD();const cl=S.settings.prio?lessonLemmas(cur):{};
@@ -1545,6 +1554,7 @@ function renderHome(){
   $('#v-home').innerHTML=`<div class="wrap">
   <div class="page-h"><div><div class="eyebrow">${esc(dateLabel(t))}</div><h1>${greet}.</h1><p>${due?`Tens <b style="color:var(--ink)">${due} cartões</b> para rever`:'Não tens cartões pendentes'} e ${L&&read>0&&read<100?`«${esc(L.title)}» a meio`:'um texto à tua espera'}. ${done===3?'Metas de hoje cumpridas.':`Faltam ${3-done} ${3-done===1?'meta':'metas'} para hoje.`}</p></div>
   <div class="row"><button class="btn" data-h="langs">${I('globe',18)} ${esc(langName(tl()))}</button><button class="btn" data-h="import">${I('upload',18)} Importar texto</button></div></div>
+  ${S.demo&&!S.demoHide?`<div class="demo-bar"><span><b>Estás a ver dados de exemplo.</b> As palavras, os cartões e as estatísticas foram preenchidos para mostrar o Glosa.</span><span class="row"><button class="btn sm" data-h="hidedemo">Manter</button><button class="btn sm pri" data-h="reset">Começar do zero</button></span></div>`:''}
   <div class="home-grid">
     ${L?`<article class="card cont span-4">${coverBox(L)}<div class="body"><div class="eyebrow">Continuar a ler · ${esc(L.level)} · ${esc(L.tag)}</div><h2>${esc(L.title)}</h2><p class="blurb">${esc(m.blurb||'')}</p>
       <div style="margin-top:auto;display:grid;gap:8px"><div class="row between" style="font-size:13px"><span><b>${st.pct}%</b> <span class="muted">palavras conhecidas · ${diffLabel(st.pct)}</span></span><span class="muted tnum">${read}% lido</span></div>${meterHTML(st,true)}</div>
@@ -1561,6 +1571,8 @@ function renderHome(){
 $('#v-home').addEventListener('click',e=>{
   const b=e.target.closest('[data-h]');if(!b)return;
   if(b.dataset.h==='import')importModal();
+  else if(b.dataset.h==='reset')resetModal();
+  else if(b.dataset.h==='hidedemo'){S.demoHide=true;save();renderHome();}
   else if(b.dataset.h==='langs')langModal();
   else if(b.dataset.h==='say')say(b.dataset.v);
 });
@@ -2193,7 +2205,8 @@ function barChart(){
   return s+'</svg>';
 }
 function lineChart(){
-  const vals=[470,505,538,561,590,612,628,knownCount()];
+  const g=GROW();const vals=g.filter(v=>v!=null);
+  if(vals.length<2)return`<p class="muted" style="padding:28px 0">O gráfico aparece quando tiveres mais de uma semana de uso. Hoje: <b style="color:var(--ink)">${knownCount()}</b> palavras conhecidas.</p>`;
   const mn=Math.floor((Math.min.apply(null,vals)-30)/50)*50,mx=Math.ceil((Math.max.apply(null,vals)+20)/50)*50;
   const x0=40,x1=596,y0=14,y1=150;
   const pts=vals.map((v,i)=>[x0+i*(x1-x0)/(vals.length-1),y1-((v-mn)/(mx-mn))*(y1-y0)]);
@@ -2203,7 +2216,7 @@ function lineChart(){
   s+=`<path class="ar" d="${d} L${x1} ${y1} L${x0} ${y1}Z"/><path class="ln" d="${d}"/>`;
   pts.forEach((p,i)=>{if(i<pts.length-1)s+=`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="2.5" style="fill:var(--accent)"/>`;});
   s+=`<circle class="pt" cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="5"/><text class="em" x="${(last[0]-10).toFixed(1)}" y="${(last[1]-12).toFixed(1)}" text-anchor="end">${vals[vals.length-1]}</text>`;
-  ['há 7 sem.','','','','','','','hoje'].forEach((l,i)=>{if(l)s+=`<text x="${pts[i][0].toFixed(1)}" y="${y1+18}" text-anchor="${i?'end':'start'}">${l}</text>`;});
+  ['há '+(vals.length-1)+' sem.','','','','','','','hoje'].slice(0,vals.length).map((l,i,a)=>i===a.length-1?'hoje':l).forEach((l,i)=>{if(l)s+=`<text x="${pts[i][0].toFixed(1)}" y="${y1+18}" text-anchor="${i?'end':'start'}">${l}</text>`;});
   return s+'</svg>';
 }
 function heatmap(){
@@ -2219,7 +2232,7 @@ function heatmap(){
 function heatStats(){
   const t=TD();let act=0,best=0,run=0,tot=0;
   for(let d=t-104;d<=t;d++){if(active(d)){act++;run++;best=Math.max(best,run);}else run=0;tot+=(S.days[d]||{w:0}).w;}
-  return [[act,'dias ativos em 15 semanas'],[Object.keys(S.texts).length+11,'textos lidos'],[Math.round(tot/105),'palavras por dia, em média']].map(x=>`<div><div class="n tnum">${x[0]}</div><div class="l">${x[1]}</div></div>`).join('');
+  return [[act,'dias ativos em 15 semanas'],[Object.keys(S.texts).length+(S.demo?11:0),'textos lidos'],[Math.round(tot/105),'palavras por dia, em média']].map(x=>`<div><div class="n tnum">${x[0]}</div><div class="l">${x[1]}</div></div>`).join('');
 }
 function cefr(){
   const k=knownCount();const th=[[0,'A1'],[500,'A2'],[1000,'B1'],[2000,'B2'],[4000,'C1'],[8000,'C2']];
@@ -2235,9 +2248,9 @@ function renderProg(){
   const cnt=[1,2,3,4].map(n=>learn.filter(l=>S.vocab[l].st===n).length);const tot=cnt.reduce((a,b)=>a+b,0)||1;
   const g=goals();
   $('#v-prog').innerHTML=`<div class="wrap">
-  <div class="page-h"><div><div class="eyebrow">Progresso</div><h1>O teu inglês, em números</h1><p>Leitura, escuta e revisão dos últimos meses. Os valores anteriores a hoje são dados de exemplo.</p></div><button class="btn" data-pv="report">${I('cal',18)} Relatório de ${MO[new Date(TD()*DAY).getUTCMonth()]}</button></div>
+  <div class="page-h"><div><div class="eyebrow">Progresso</div><h1>O teu inglês, em números</h1><p>${S.demo?'Leitura, escuta e revisão dos últimos meses. Estás a ver dados de exemplo: podes começar do zero em Definições.':'O que leste, ouviste e reviste. Os gráficos enchem-se à medida que usas o Glosa.'}</p></div><button class="btn" data-pv="report">${I('cal',18)} Relatório de ${MO[new Date(TD()*DAY).getUTCMonth()]}</button></div>
   <div class="kpis">
-    <div class="card kpi"><span class="l">Palavras conhecidas</span><span class="n tnum">${knownCount()}</span><span class="dl">+${knownCount()-612} em 2 semanas</span>${spark([470,505,538,561,590,612,628,knownCount()],200,40)}</div>
+    <div class="card kpi"><span class="l">Palavras conhecidas</span><span class="n tnum">${knownCount()}</span>${(()=>{const g=GROW();const p=g[5];return p!=null?`<span class="dl">+${Math.max(0,knownCount()-p)} em 2 semanas</span>`:'<span class="dl" style="color:var(--muted)">desde que começaste</span>';})()}${GROW().filter(v=>v!=null).length>=2?spark(GROW().filter(v=>v!=null),200,40):''}</div>
     <div class="card kpi"><span class="l">Palavras lidas · 30 dias</span><span class="n tnum">${Math.round(sum('w',30)).toLocaleString('pt-PT')}</span><span class="dl" style="color:var(--muted)">${Math.round(sum('w',30)/30)} por dia</span>${spark(series('w',30),200,40)}</div>
     <div class="card kpi"><span class="l">Cartões revistos · 30 dias</span><span class="n tnum">${Math.round(sum('r',30))}</span><span class="dl" style="color:var(--muted)">${learn.length} a aprender agora</span>${spark(series('r',30),200,40)}</div>
     <div class="card kpi"><span class="l">Minutos a ouvir · 30 dias</span><span class="n tnum">${Math.round(sum('l',30))}</span><span class="dl" style="color:var(--muted)">${fmt(sum('l',30)/30)} min por dia</span>${spark(series('l',30),200,40)}</div>
@@ -2275,7 +2288,7 @@ function settingsModal(){
     <div class="road">
       <div>${I('check',18)}<span><b>Já funciona na demo:</b> leitor com estados de palavras, expressões, seleção de frases e leitura contínua, glossário antes de ler, prática (tradução inversa, ditado, ouvir e repetir), IA em contexto (pré-escrita), voz com destaque palavra a palavra, cartões em 4 modos com repetição espaçada, importação de PDF, EPUB, Word, ODT, HTML, Markdown, legendas, RTF e texto (com deteção da língua e livros divididos em partes), cópia de segurança, vocabulário, metas, estatísticas e exportação para Anki.</span></div>
       <div>${I('clock',18)}<span><b>Falta para a versão real:</b> tradução e IA reais com cache (incluindo correção livre das tuas traduções e histórias novas), gravação de voz no shadowing, widget para Android, conta e sincronização, modo offline (PWA), extensão do browser, OCR de PDFs digitalizados e imagens, YouTube por link, áudio sincronizado com Whisper, algoritmo FSRS e lematização completa.</span></div></div>
-    <div class="row"><button class="btn sm" id="s-backup">${I('dl',16)} Cópia de segurança</button><button class="btn sm" id="s-reset">Repor dados da demo</button></div></div>`,'Definições');
+    <div class="row"><button class="btn sm" id="s-backup">${I('dl',16)} Cópia de segurança</button><button class="btn sm" id="s-reset" style="color:var(--bad);border-color:color-mix(in srgb,var(--bad) 45%,var(--line-2))">Começar do zero</button><button class="linkbtn" id="s-demo">Ver com dados de exemplo</button></div></div>`,'Definições');
   const on=(id,ev,fn)=>{const el=document.getElementById(id);if(el)el.addEventListener(ev,fn);};
   $$('#mcard [data-th]').forEach(b=>b.onclick=()=>{s.theme=b.dataset.th;applyTheme();save();$$('#mcard [data-th]').forEach(x=>x.classList.toggle('on',x===b));});
   on('s-l1','change',e=>{s.native=e.target.value;save();settingsModal();});
@@ -2291,12 +2304,8 @@ function settingsModal(){
   on('g-c','input',e=>{s.goal.c=Math.max(1,+e.target.value||1);save();updateChrome();});
   on('s-backup','click',()=>backupModal());
   bindAISettings();
-  on('s-reset','click',()=>{
-    const b=$('#s-reset');if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='Tens a certeza? Toca outra vez';return;}
-    try{localStorage.removeItem(KEY);}catch(e){}
-    S=defaults();for(let i=LESSONS.length-1;i>=0;i--){if(/^(u|rev)/.test(LESSONS[i].id))LESSONS.splice(i,1);}
-    cur='t1';G=null;applyTheme();closeModal();go('home');toast('Demo reposta','check');
-  });
+  on('s-reset','click',()=>resetModal());
+  on('s-demo','click',()=>demoModal());
 }
 function applyTheme(){const t=S.settings.theme;if(t==='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',t);}
 
@@ -2394,10 +2403,13 @@ function pauseHTML(){
 
 /* ---------- progresso: novos gráficos ---------- */
 const CEFR=[[0,'A1'],[500,'A2'],[1000,'B1'],[2000,'B2'],[4000,'C1'],[8000,'C2']];
-const GROW=()=>{const k=knownCount();return tl()==='en'?[470,505,538,561,590,612,628,k]:[.55,.62,.68,.74,.8,.87,.94,1].map(f=>Math.round(k*f));};
+/* palavras conhecidas por semana (8 semanas), a partir dos registos diários; null = ainda sem registo */
+const GROW=()=>{const t=TD(),h=(S.kh&&S.kh[tl()])||{};const days=Object.keys(h).map(Number).sort((a,b)=>a-b);const out=[];
+  for(let w=7;w>=0;w--){const d=t-w*7;if(w===0){out.push(knownCount());continue;}let v=null;days.forEach(x=>{if(x<=d)v=h[x];});out.push(v);}return out;};
 function etaHTML(){
   const k=knownCount();let idx=0;CEFR.forEach((x,i)=>{if(k>=x[0])idx=i;});const nx=CEFR[idx+1];if(!nx)return'';
-  const g=GROW();const rate=Math.max(1,(g[g.length-1]-g[0])/(g.length-1));const wk=Math.ceil((nx[0]-k)/rate);
+  const g=GROW();const fi=g.findIndex(v=>v!=null);if(fi<0||fi>=g.length-2)return`<div class="eta"><span class="muted">A previsão do próximo nível aparece depois de duas semanas de uso.</span></div>`;
+  const rate=(g[g.length-1]-g[fi])/(g.length-1-fi);if(rate<=0)return`<div class="eta"><span class="muted">Marca palavras como conhecidas para veres quando chegas a ${nx[1]}.</span></div>`;const wk=Math.ceil((nx[0]-k)/rate);
   const d=new Date((TD()+wk*7)*DAY);
   return`<div class="eta"><span class="si">${I('target')}</span><span><b>${nx[1]} em cerca de ${wk} semanas</b><br><span class="muted" style="font-size:13px">Ao teu ritmo de ~${Math.round(rate)} palavras novas por semana, por volta de ${MO[d.getUTCMonth()]} de ${d.getUTCFullYear()}.</span></span></div>`;
 }
@@ -2454,7 +2466,7 @@ function mistakesHTML(){
 function progExtra(){
   const f=forecastChart(),fc=forgetCurve();
   return`<div class="card"><div class="row between"><h3>Revisões nos próximos 7 dias</h3><span class="chip">${f.total} cartões</span></div><p class="muted" style="font-size:13px;margin:4px 0 12px">${f.peak===0?'O dia mais carregado é hoje.':'O dia mais carregado é '+(f.peak===1?'amanhã':WD[dow(TD()+f.peak)])+'.'} Inclui cartões em atraso.</p>${f.svg}</div>
-  <div class="card"><div class="row between"><h3>A tua curva de esquecimento</h3><span class="chip">${fc.tot} revisões</span></div><p class="muted" style="font-size:13px;margin:4px 0 12px">Quantas palavras lembras, conforme o tempo desde a última revisão. A tracejado: a curva original de Ebbinghaus, sem revisões.</p>${fc.svg}<p class="muted" style="font-size:12.5px;margin-top:8px">Mesmo depois de 15+ dias lembras ${fc.last}%. Sem revisões, a curva de 1885 ficava perto de 21%.</p></div>
+  <div class="card"><div class="row between"><h3>A tua curva de esquecimento</h3><span class="chip">${fc.tot} revisões</span></div><p class="muted" style="font-size:13px;margin:4px 0 12px">Quantas palavras lembras, conforme o tempo desde a última revisão. A tracejado: a curva original de Ebbinghaus, sem revisões.</p>${fc.tot?fc.svg:'<p class="muted" style="padding:20px 0">Ainda não há revisões suficientes. A curva aparece à medida que revês cartões.</p>'}${fc.tot?'':'<!--'}<p class="muted" style="font-size:12.5px;margin-top:8px">Mesmo depois de 15+ dias lembras ${fc.last}%. Sem revisões, a curva de 1885 ficava perto de 21%.</p>${fc.tot?'':'-->'}</div>
   <div class="card"><h3>Vocabulário por tema</h3><p class="muted" style="font-size:13px;margin:4px 0 14px">Palavras dos textos agrupadas por tema: conhecidas, a aprender e novas.</p><div style="display:grid;gap:12px">${themesHTML()}</div></div>
   ${langsCard()}
   <div class="card"><h3>Onde falhas mais</h3><p class="muted" style="font-size:13px;margin:4px 0 14px">Erros nas revisões, por tipo de palavra.</p>${mistakesHTML()}</div>`;
@@ -2471,7 +2483,7 @@ function reportModal(){
   const added=Object.keys(S.vocab).filter(k=>S.vocab[k].added&&inM(S.vocab[k].added)).length;
   const texts=Object.keys(S.texts).filter(k=>inM(S.texts[k])).length;
   const hard=Object.keys(S.vocab).filter(k=>S.vocab[k].srs&&S.vocab[k].srs.lapses).sort((a,b)=>S.vocab[b].srs.lapses-S.vocab[a].srs.lapses).slice(0,5);
-  const gr=GROW();const gained=gr[gr.length-1]-gr[3];const mn=MO[m];
+  const gr=GROW();const gained=gr[3]!=null?Math.max(0,gr[gr.length-1]-gr[3]):0;const mn=MO[m];
   const txt=`Glosa · relatório de ${mn} ${y}\nPalavras lidas: ${Math.round(w)}\nMinutos a ouvir: ${Math.round(l)}\nCartões revistos: ${Math.round(r)}\nDias com atividade: ${act}\nPalavras novas guardadas: ${added}\nPalavras conhecidas: ${knownCount()} (+${gained} em 4 semanas)\nTextos terminados: ${texts}\nMais difíceis: ${hard.map(label).join(', ')||'—'}`;
   setModal(`<div class="mhead"><div><div class="eyebrow">Relatório mensal</div><h2 style="margin-top:6px;text-transform:capitalize">${mn} ${y}</h2></div><button class="ibtn" data-close aria-label="Fechar">${I('x')}</button></div>
   <div class="rep-grid">${[[Math.round(w).toLocaleString('pt-PT'),'palavras lidas'],[Math.round(l),'minutos a ouvir'],[Math.round(r),'cartões revistos'],[act,'dias com atividade'],['+'+gained,'palavras conhecidas'],[added,'palavras guardadas']].map(x=>`<div class="stat"><div class="n tnum" style="font-size:32px">${x[0]}</div><div class="l">${x[1]}</div></div>`).join('')}</div>
@@ -2624,6 +2636,35 @@ document.addEventListener('click',e=>{
   if(b){const lg=b.dataset.setlang;setLang(lg);closeModal();toast('A aprender: '+langName(lg),'globe');go(['prog','words','review','practice'].indexOf(view)>=0?view:'lib');return;}
   const h=e.target.closest('[data-h2="langs"]');if(h)langModal();
 });
+
+/* =========================================================
+   COMEÇAR DO ZERO / DADOS DE EXEMPLO
+   ========================================================= */
+function resetModal(){
+  const nImp=(S.imported||[]).length;
+  setModal(`<div class="mhead"><div><div class="eyebrow">Os teus dados</div><h2 style="margin-top:6px">Começar do zero</h2></div><button class="ibtn" data-close aria-label="Fechar">${I('x')}</button></div>
+  <p>Isto apaga, neste ${inAndroid()?'telemóvel':'navegador'}:</p>
+  <ul class="muted" style="margin:-6px 0 0;padding-left:18px;display:grid;gap:4px;font-size:14px"><li>palavras e expressões marcadas</li><li>cartões e histórico de revisões</li><li>textos lidos, metas e estatísticas</li></ul>
+  ${nImp?`<label class="tog" style="padding:12px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)"><span>Manter os ${nImp} ${nImp===1?'texto importado':'textos importados'}</span><span class="sw-t"><input type="checkbox" id="rs-keep" checked aria-label="Manter os textos importados"><span></span></span></label>`:''}
+  <p class="muted" style="font-size:13px">As definições, o tema, a língua e a chave da IA mantêm-se. Se quiseres guardar uma cópia antes, usa a Cópia de segurança.</p>
+  <div class="row" style="justify-content:flex-end"><button class="btn" data-close>Cancelar</button><button class="btn pri" id="rs-ok" style="background:var(--bad);border-color:var(--bad);color:#fff">Apagar e começar do zero</button></div>`,'Começar do zero');
+  $('#rs-ok').onclick=()=>{const k=$('#rs-keep');doReset(!k||k.checked);};
+}
+function doReset(keepImported){
+  const n=defaults();n.settings=S.settings;n.ai=S.ai;
+  if(keepImported)n.imported=S.imported||[];
+  else for(let i=LESSONS.length-1;i>=0;i--){if(LESSONS[i].imp)LESSONS.splice(i,1);}
+  for(let i=LESSONS.length-1;i>=0;i--){if(LESSONS[i].id==='rev')LESSONS.splice(i,1);}
+  S=n;const own=lessonsOf(tl());cur=own.length?own[0].id:'t1';S.last=cur;G=null;
+  if(typeof PR!=='undefined'){PR.sid=null;PR.res=null;PR.ai=null;PR.val='';}
+  R.phase='start';save();closeModal();go('home');toast('Começaste do zero','check');
+}
+function demoModal(){
+  setModal(`<div class="mhead"><div><div class="eyebrow">Os teus dados</div><h2 style="margin-top:6px">Ver com dados de exemplo</h2></div><button class="ibtn" data-close aria-label="Fechar">${I('x')}</button></div>
+  <p>Preenche o Glosa com palavras, cartões e três meses de estatísticas inventadas, para veres como fica com uso. <b>Substitui os teus dados atuais</b>; os textos importados mantêm-se.</p>
+  <div class="row" style="justify-content:flex-end"><button class="btn" data-close>Cancelar</button><button class="btn pri" id="dm-ok">Carregar exemplo</button></div>`,'Dados de exemplo');
+  $('#dm-ok').onclick=()=>{const n=demoData();n.settings=S.settings;n.ai=S.ai;n.imported=S.imported||[];S=n;cur='t1';G=null;save();closeModal();go('home');toast('Dados de exemplo carregados');};
+}
 
 
 /* =========================================================
