@@ -190,24 +190,30 @@ function saveFile(name,data){
 /* ---------- definições ---------- */
 function aiSettingsHTML(){
   const s=S.settings,src=aiProvider(),ic=inClaude();
-  const aiState=src==='claude'?['Claude','Ligada · traduções, explicações, perguntas e correções reais','ok']:src==='gemini'?['Gemini','Ligada com a tua chave','ok']:[ic?'A ligar ao Claude…':'Sem IA',ic?(AI_DENIED?'Não deste acesso. Ativa-a nas definições do Claude.':'Pode demorar alguns segundos.'):'Respostas de exemplo. Adiciona uma chave grátis do Gemini abaixo.',''];
-  const vState=useClaudeVoice()?['Voz do Claude','4 vozes naturais, em várias línguas','ok']:inAndroid()?['Voz do Android','Instala mais vozes em Definições → Sistema → Idiomas → Texto para voz.','ok']:['Voz do dispositivo',CAP.tts?'Escolheste a voz do dispositivo':'As vozes do Claude não estão disponíveis aqui (Safari e apps móveis).',''];
-  return`<div class="set-sec"><h3>IA e voz</h3>
-  <div class="src"><span class="si">${I('spark')}</span><span class="grow"><b>IA: ${esc(aiState[0])}</b><small>${esc(aiState[1])}</small></span>${aiState[2]?`<span class="chip ok">${I('check',14)} Ativa</span>`:''}</div>
-  <div class="src"><span class="si">${I('spk')}</span><span class="grow"><b>${esc(vState[0])}</b><small>${esc(vState[1])}</small></span>${vState[2]?`<span class="chip ok">${I('check',14)} Ativa</span>`:''}</div>
-  ${CAP.tts?`<div class="grid2"><div class="field"><label for="s-vsrc">Voz</label><select id="s-vsrc"><option value="claude" ${s.voiceSrc!=='device'?'selected':''}>Voz do Claude</option><option value="device" ${s.voiceSrc==='device'?'selected':''}>Voz do dispositivo</option></select></div><div class="field"><label for="s-cvoice">Voz do Claude</label><select id="s-cvoice">${[['buttery','Buttery'],['airy','Airy'],['glassy','Glassy'],['rounded','Rounded']].map(v=>`<option value="${v[0]}" ${(s.cvoice||'buttery')===v[0]?'selected':''}>${v[1]}</option>`).join('')}</select></div></div><button class="btn sm" id="s-vtest" style="justify-self:start">${I('spk',16)} Ouvir a voz</button>`:''}
-  ${CAP.dict?`<p class="muted" style="font-size:13px">${I('mic',14)} Ditado pelo microfone ativo na secção Praticar.</p>`:''}
-  ${!ic?`<details class="card flat" style="padding:12px 14px" ${gemKey()?'':'open'}><summary style="cursor:pointer;font-weight:600">Chave do Gemini (grátis)</summary>
-    <div style="display:grid;gap:10px;margin-top:10px"><p class="muted" style="font-size:13px">1. Abre <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> com a tua conta Google.<br>2. Cria uma chave e cola-a aqui.<br>Fica só neste navegador e não entra na cópia de segurança.</p>
-    <div class="field"><label for="s-gkey">Chave de API</label><input type="password" id="s-gkey" placeholder="AIza…" value="${esc(gemKey())}" autocomplete="off"></div>
-    <div class="field"><label for="s-gmodel">Modelo</label><input type="text" id="s-gmodel" value="${esc(s.gemModel||'gemini-2.5-flash')}"><span class="hint">Se o Google mudar o nome do modelo, atualiza aqui.</span></div>
-    <div class="row"><button class="btn sm pri" id="s-gsave">Guardar</button><button class="btn sm" id="s-gtest">Testar</button>${gemKey()?'<button class="btn sm" id="s-gdel">Apagar chave</button>':''}</div></div></details>`:''}
-  </div>`;
+  const aiSub=src==='claude'?'Claude · traduções e explicações reais':src==='gemini'?'Gemini · com a tua chave':ic?(AI_DENIED?'Não deste acesso. Ativa-a nas definições do Claude.':'A ligar ao Claude…'):'Desligada · respostas de exemplo';
+  const claudeV=CAP.tts&&s.voiceSrc!=='device';
+  const vSub=claudeV?'Vozes naturais do Claude':inAndroid()?'Do Android · mais vozes em Definições do sistema → Texto para voz':'Do dispositivo';
+  const sel=(id,opts,v)=>`<select id="${id}" class="li-sel">${opts.map(o=>`<option value="${esc(o[0])}" ${String(o[0])===String(v)?'selected':''}>${esc(o[1])}</option>`).join('')}</select>`;
+  return`<section class="grp"><h4>Voz</h4><div class="list">
+    <div class="li"><span>Voz<small>${esc(vSub)}</small></span>${CAP.tts?sel('s-vsrc',[['claude','Claude'],['device','Dispositivo']],claudeV?'claude':'device'):''}</div>
+    ${claudeV?`<div class="li"><span>Timbre</span>${sel('s-cvoice',[['buttery','Buttery'],['airy','Airy'],['glassy','Glassy'],['rounded','Rounded']],s.cvoice||'buttery')}</div>`
+      :(typeof VOICES!=='undefined'&&VOICES.length?`<div class="li"><span>Voz em inglês</span>${sel('s-voice',[['','Automática']].concat(VOICES.map(v=>[v.name,v.name])),s.voice||'')}</div>`:'')}
+    <button class="li li-btn" id="s-vtest"><span class="acc">Ouvir a voz</span>${I('spk',18)}</button>
+  </div></section>
+  <section class="grp"><h4>Inteligência artificial</h4><div class="list">
+    <div class="li"><span>IA<small>${esc(aiSub)}</small></span>${src?`<span class="ok-dot" aria-label="Ligada"></span>`:''}</div>
+    ${!ic?`<details class="li-det" ${gemKey()?'':'open'}><summary class="li li-btn"><span>Chave do Gemini (grátis)</span>${I('chev',18)}</summary>
+      <div class="li-body"><p class="foot" style="margin:0">Cria uma chave em <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> com a tua conta Google e cola-a aqui. Fica só neste dispositivo.</p>
+      <input type="password" id="s-gkey" class="inp" placeholder="AIza…" value="${esc(gemKey())}" autocomplete="off" aria-label="Chave de API">
+      <input type="text" id="s-gmodel" class="inp" value="${esc(s.gemModel||'gemini-2.5-flash')}" aria-label="Modelo">
+      <div class="row"><button class="btn sm pri" id="s-gsave">Guardar</button><button class="btn sm" id="s-gtest">Testar</button>${gemKey()?'<button class="btn sm" id="s-gdel">Apagar</button>':''}</div></div></details>`:''}
+  </div>${CAP.dict?`<p class="foot">O ditado pelo microfone está ativo em Praticar.</p>`:''}</section>`;
 }
 function bindAISettings(){
   const s=S.settings;const on=(id,ev,fn)=>{const el=document.getElementById(id);if(el)el.addEventListener(ev,fn);};
   on('s-vsrc','change',e=>{s.voiceSrc=e.target.value;save();settingsModal();});
   on('s-cvoice','change',e=>{s.cvoice=e.target.value;save();});
+  on('s-voice','change',e=>{s.voice=e.target.value;save();});
   on('s-vtest','click',()=>say(tl()==='en'?'Hello! This is how I sound when I read to you.':(SENT[sentsOf(lessonsOf(tl())[0]||LESSONS[0])[0]]||{}).en||'Hello!'));
   on('s-gsave','click',()=>{setGemKey($('#s-gkey').value.trim());s.gemModel=$('#s-gmodel').value.trim()||'gemini-2.5-flash';save();toast('Guardado','check');settingsModal();});
   on('s-gdel','click',()=>{setGemKey('');toast('Chave apagada');settingsModal();});

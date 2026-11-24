@@ -13,7 +13,7 @@ async def main():
     await pg.locator('[data-nav="read"]:visible').first.click(); await pg.wait_for_timeout(200)
     await pg.locator('[data-tb="play"]').click(); await pg.wait_for_timeout(1200)
     await pg.locator('[data-tb="play"]').click()
-    await pg.locator('[data-nav="review"]:visible').first.click(); await pg.locator('[data-r="export"]').click(); await pg.locator('#ex-dl').click(); await pg.wait_for_timeout(200)
+    await pg.evaluate("()=>{if(view==='read')go('lib')}");await pg.locator('[data-nav="review"]:visible').first.click(); await pg.locator('[data-r="export"]').click(); await pg.locator('#ex-dl').click(); await pg.wait_for_timeout(200)
     a=await pg.evaluate("()=>window.__a")
     print('speak calls:',sum(1 for x in a if x[0]=='speak'),'| first:',a[0],'| save:',[x for x in a if x[0]=='save'],'| stop:',sum(1 for x in a if x[0]=='stop'))
     print('errors:',errs or 'none'); await b.close()

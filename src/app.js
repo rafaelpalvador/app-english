@@ -21,6 +21,9 @@ const P={
  spk:'<path d="M4 9.5v5h3.5L12 18V6L7.5 9.5z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/>',
  spark:'<path d="M12 3c.6 4.2 2.8 6.4 7 7-4.2.6-6.4 2.8-7 7-.6-4.2-2.8-6.4-7-7 4.2-.6 6.4-2.8 7-7z"/><path d="M19 15.5c.2 1.4.9 2.1 2.3 2.3-1.4.2-2.1.9-2.3 2.3-.2-1.4-.9-2.1-2.3-2.3 1.4-.2 2.1-.9 2.3-2.3z"/>',
  x:'<path d="M6 6l12 12M18 6 6 18"/>',
+ back:'<path d="M14.5 5.5 8 12l6.5 6.5"/>',
+ aa:'<path d="M3 18 7.2 7h.6L12 18M4.5 14.5h6"/><path d="M14.5 11.2c.6-.9 1.6-1.4 2.8-1.4 1.8 0 2.9 1 2.9 2.8V18M20.2 14.4c-3.6 0-5.6.7-5.6 2.1 0 1 .8 1.7 2 1.7 2 0 3.6-1.5 3.6-3.8"/>',
+ chev:'<path d="m9.5 6 6 6-6 6"/>',
  check:'<path d="m5 12.5 4.5 4.5L19 7.5"/>',
  search:'<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>',
  upload:'<path d="M12 15V4m0 0L7.5 8.5M12 4l4.5 4.5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/>',
@@ -66,7 +69,7 @@ function hashStr(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt
 
 /* ---------- estado ---------- */
 const KEY='glosa-v2';
-function baseSettings(){return{flow:false,fs:20,lh:1.95,rtheme:'paper',hl:'all',rate:1,voice:'',expr:true,sbtn:true,theme:'auto',goal:{r:250,l:10,c:20},engine:'deepl',llm:'gemini',prio:true};}
+function baseSettings(){return{flow:false,fs:20,lh:1.6,rtheme:'paper',hl:'all',rate:1,voice:'',expr:true,layout:'sent',trans:true,rfont:'sans',theme:'auto',goal:{r:250,l:10,c:20},engine:'deepl',llm:'gemini',prio:true};}
 /* estado inicial: vazio, sem dados de exemplo */
 function defaults(){return{vocab:{},days:{},texts:{},pos:{},imported:[],last:'t1',pend:{},log:[],kh:{},settings:baseSettings()};}
 /* dados de exemplo, só quando a pessoa os pede (Definições → Os teus dados) */
@@ -105,6 +108,7 @@ function load(){
     const raw=localStorage.getItem(KEY);
     if(raw){const o=JSON.parse(raw);Object.assign(d,o);d.settings=Object.assign(defaults().settings,o.settings||{});d.settings.goal=Object.assign(defaults().settings.goal,(o.settings&&o.settings.goal)||{});}
   }catch(e){}
+  if(d.settings&&d.settings.lh>1.9&&!(d.settings._v>=3)){d.settings.lh=1.6;}if(d.settings)d.settings._v=3;
   // dados de exemplo gravados por versões antigas da app
   if(d.demo===undefined&&Array.isArray(d.log)&&d.log.length>=200&&d.vocab.decide&&d.vocab.decide.ctx&&d.vocab.decide.ctx.sid==='t1s1'){d.demo=true;d.base=640;}
   return d;
@@ -258,7 +262,7 @@ function go(v,silent){
   if(v!=='practice'&&REP.on)stopRep();
   view=v;
   $$('.view').forEach(s=>{s.hidden=s.id!=='v-'+v;});
-  document.body.classList.toggle('reading-open',v==='read'&&!!G);
+  document.body.classList.toggle('reading-open',v==='read'&&!!G);document.body.classList.toggle('in-read',v==='read');document.body.classList.remove('r-scrolled');
   if(v==='home')renderHome();else if(v==='read')renderRead();else if(v==='lib')renderLib();else if(v==='review'){R.phase='start';renderReview();}else if(v==='words')renderWords();else if(v==='practice')renderPractice();else if(v==='prog')renderProg();
   renderNav();
   try{if(location.hash!=='#'+HASH[v])history.replaceState(null,'','#'+HASH[v]);}catch(e){try{location.hash=HASH[v];}catch(e2){}}
@@ -318,30 +322,31 @@ $('#v-home').addEventListener('click',e=>{
    LEITOR
    ========================================================= */
 function renderRead(){
-  if(!(lessonById(cur)&&lessonById(cur).lang===tl())){const own=lessonsOf(tl());if(own.length)cur=own[0].id;else{$('#v-read').innerHTML=`<div class="wrap"><div class="card done-hero"><h2>Ainda não há textos em ${esc(langName(tl()).toLowerCase())}</h2><p class="muted" style="max-width:46ch">Importa um texto, PDF ou livro EPUB nesta língua para começares a ler.</p><div class="row" style="justify-content:center"><button class="btn" data-h2="langs">${I('globe',16)} Mudar de língua</button><button class="btn pri" data-imp>${I('upload',16)} Importar</button></div></div></div>`;return;}}
+  if(!(lessonById(cur)&&lessonById(cur).lang===tl())){const own=lessonsOf(tl());if(own.length)cur=own[0].id;else{$('#v-read').innerHTML=`<div class="wrap"><div class="empty-state"><h2>Ainda não há textos em ${esc(langName(tl()).toLowerCase())}</h2><p>Importa um texto, PDF ou livro EPUB nesta língua para começares a ler.</p><div class="row" style="justify-content:center"><button class="btn" data-h2="langs">Mudar de língua</button><button class="btn pri" data-imp>Importar</button></div></div></div>`;return;}}
   const L=lessonById(cur)||LESSONS[0];cur=L.id;const m=META[L.id]||{};const st=lessonStats(L);const s=S.settings;
-  $('#v-read').innerHTML=`<div class="wrap"><div class="reader">
-  <article class="sheet" id="sheet" data-r="${s.rtheme}">
-    <header class="r-head">${coverBox(L)}<div style="min-width:0"><div class="eyebrow">${esc(L.level)} · ${esc(L.tag)} · ${esc(m.coll||'')}</div><h1>${esc(L.title)}</h1><div class="r-meta"><span>${esc(m.author||'')}</span><span>${I('clock',14)} ~${minutes(st)} min</span><span>${st.tot} palavras</span><span>${I('head',14)} com voz</span>${L.imp?`<button class="linkbtn" data-tb="del">Apagar ${(META[L.id]||{}).part?'livro':'texto'}</button>`:''}</div></div></header>
-    <div class="cov" id="r-cov"></div>
-    <div class="pre" id="r-pre"></div>
-    <div class="toolbar" id="toolbar">
-      <div class="seg" role="group" aria-label="Tamanho do texto"><button data-tb="fsm" aria-label="Diminuir texto">A−</button><button data-tb="fsp" aria-label="Aumentar texto">A+</button></div>
-      <div class="tdots" role="group" aria-label="Fundo da página">${['paper','sepia','night'].map(k=>`<button class="t-${k} ${s.rtheme===k?'on':''}" data-tb="rt" data-v="${k}" aria-label="${k==='paper'?'Papel':k==='sepia'?'Sépia':'Noite'}"></button>`).join('')}</div>
-      <div class="seg" role="group" aria-label="Destaques">${[['all','Tudo'],['new','Só novas'],['none','Limpo']].map(k=>`<button class="${s.hl===k[0]?'on':''}" data-tb="hl" data-v="${k[0]}">${k[1]}</button>`).join('')}</div>
-      <button class="btn xs flowbtn ${s.flow?'on':''}" data-tb="flow" aria-pressed="${s.flow}">${I('eye',15)} Leitura contínua</button>
-      <button class="btn xs" data-tb="pend" id="pend-btn" ${s.flow?'':'hidden'}></button>
-      <span class="tb-sp"></span>
-      <div class="seg" role="group" aria-label="Velocidade">${[[.8,'0.8×'],[1,'1×'],[1.2,'1.2×']].map(k=>`<button class="${Math.abs(s.rate-k[0])<.01?'on':''}" data-tb="rate" data-v="${k[0]}">${k[1]}</button>`).join('')}</div>
-      <button class="play" id="play" data-tb="play"></button>
-      <div class="rprog" id="rprog"></div>
+  const meta=[m.coll||m.author,'~'+minutes(st)+' min',st.tot.toLocaleString('pt-PT')+' palavras'].filter(Boolean).join(' · ');
+  $('#v-read').innerHTML=`<div class="reader"><div class="sheet" id="sheet" data-r="${s.rtheme}">
+    <div class="rbar"><button class="rb-i" data-nav="lib" aria-label="Voltar à biblioteca">${I('back',24)}</button><div class="rb-prog" aria-hidden="true"><i id="rprog"></i></div><button class="rb-i" data-tb="aa" aria-label="Aparência do texto">${I('aa',24)}</button></div>
+    <div class="rcol">
+      <header class="r-head">${coverBox(L)}<div class="rh-t"><h1>${esc(L.title)}</h1><div class="r-meta">${esc(meta)}</div></div></header>
+      <div class="cov" id="r-cov"></div>
+      <div class="pre" id="r-pre"></div>
+      <div class="textwrap"><div id="text"></div>
+        <div class="r-end"><p>Ao terminar, as palavras que não marcaste passam a conhecidas${L.qs.length?' e respondes a '+L.qs.length+' perguntas':''}.</p><button class="btn pri wide" data-tb="finish">Terminar lição</button></div>
+      </div>
     </div>
-    <div class="textwrap"><div id="text"></div>
-      <div class="r-end"><p>Ao terminar, as palavras que não marcaste passam a <b style="color:var(--known)">conhecidas</b> e respondes a ${L.qs.length?L.qs.length+' perguntas de compreensão':'um resumo'}.</p><button class="btn pri" data-tb="finish">${I('check',18)} Terminar lição</button></div>
+  </div>
+  <div class="dock" role="toolbar" aria-label="Leitor">
+    <button class="dk-play" id="play" data-tb="play"></button>
+    <div class="dk-grp">
+      <button data-tb="trans" class="${s.trans?'on':''}" aria-pressed="${!!s.trans}" aria-label="Traduções por baixo das frases" title="Traduções">${I('tr',22)}</button>
+      <button data-tb="flow" class="${s.flow?'on':''}" aria-pressed="${!!s.flow}" aria-label="Leitura contínua" title="Leitura contínua">${I('eye',22)}</button>
+      <button data-tb="pend" id="pend-btn" hidden></button>
     </div>
-  </article>
+    <button class="dk-fin" data-tb="done" aria-label="Terminar lição" title="Terminar lição">${I('check',22)}</button>
+  </div>
   <aside class="gloss" id="gloss" aria-label="Glosa"><div class="g-handle" id="g-handle" aria-hidden="true"><i></i></div><div class="g-scroll" id="gscroll"></div></aside>
-  </div></div>`;
+  </div>`;
   renderText();applyReader();updateCov();renderPre();renderPend();renderPlay();renderGloss();bindHandle();
   const p=S.pos[L.id]||0;if(p>.02&&p<.98){requestAnimationFrame(()=>{const tw=$('.textwrap');if(tw){const top=tw.getBoundingClientRect().top+window.scrollY;window.scrollTo(0,top+(tw.offsetHeight-window.innerHeight)*p-80);}});}
 }
@@ -367,28 +372,89 @@ function sentHTML(sid){
     else h+=`<span class="w st${stc(k.l)}${k.x!=null?' x':''}${isPend(sid,i)?' pend':''}" tabindex="0" role="button" data-s="${sid}" data-i="${i}">${esc(k.w)}</span>`;
     if(eA[i])h+='</span>';
   });
-  return`<span class="sent" id="${sid}">${h}<button class="sbtn" data-sb="${sid}" aria-label="Traduzir frase" title="Traduzir frase">${I('tr',15)}</button></span>`;
+  const tr=SENT[sid]&&SENT[sid].pt;
+  return`<span class="sent" id="${sid}">${h}<button class="sbtn" data-sb="${sid}" aria-label="Tradução da frase" title="Tradução da frase">${I('tr',15)}</button><span class="str" data-t="${sid}" dir="auto">${tr?esc(tr):''}</span></span>`;
 }
-function renderText(){const L=lessonById(cur);$('#text').innerHTML=L.paras.map(p=>`<p>${p.map(sentHTML).join(' ')}</p>`).join('');}
+function renderText(){const L=lessonById(cur);$('#text').innerHTML=L.paras.map(p=>`<p>${p.map(sentHTML).join(' ')}</p>`).join('');watchTr();}
+/* traduções por baixo das frases: as que faltam pedem-se à IA, em lotes, só quando aparecem no ecrã */
+let TRIO=null;const TRQ=[];let trBusy=false;
+function trOn(){const s=S.settings;return s.layout!=='page'&&s.trans;}
+function watchTr(){
+  if(TRIO){TRIO.disconnect();TRIO=null;}
+  if(!aiProvider()||!('IntersectionObserver' in window))return;
+  TRIO=new IntersectionObserver(es=>{es.forEach(e=>{if(!e.isIntersecting)return;const sent=e.target,sid=sent.id;if(SENT[sid].pt){TRIO.unobserve(sent);return;}if(!trOn())return;TRIO.unobserve(sent);if(TRQ.indexOf(sid)<0)TRQ.push(sid);});pumpTr();},{rootMargin:'300px 0px'});
+  $$('#text .str').forEach(x=>{if(!x.textContent)TRIO.observe(x.parentNode);});
+}
+function pumpTr(){
+  if(trBusy||!TRQ.length||!aiProvider())return;trBusy=true;
+  const ids=TRQ.splice(0,10);ids.forEach(id=>{const el=$(`#text .str[data-t="${id}"]`);if(el)el.classList.add('wait');});
+  const done=()=>{trBusy=false;ids.forEach(id=>{const el=$(`#text .str[data-t="${id}"]`);if(el){el.classList.remove('wait');if(SENT[id].pt)el.textContent=SENT[id].pt;}});if(TRQ.length)setTimeout(pumpTr,400);};
+  ensureAI();
+  askAI(`Traduz para ${nat()} cada frase abaixo, em ${langName(lgOf(ids[0]))}, de forma natural. Responde só com as traduções, uma por linha, com o mesmo número à frente (1. 2. …), sem notas.\n\n`+ids.map((id,k)=>(k+1)+'. '+SENT[id].en.replace(/\s+/g,' ')).join('\n'))
+  .then(t=>{String(t||'').split(/\n+/).forEach(line=>{const m=line.match(/^\s*(\d+)[.)]\s*(.+)$/);if(!m)return;const id=ids[+m[1]-1];if(id&&!SENT[id].pt){SENT[id].pt=m[2].trim();S.ai.s[id]=SENT[id].pt;}});save();done();})
+  .catch(e=>{done();TRQ.length=0;toast(aiErrText(e));});
+}
+function revealTr(sid){
+  const sent=document.getElementById(sid);if(!sent)return;sent.classList.toggle('rev');
+  const el=sent.querySelector('.str');if(sent.classList.contains('rev')&&el&&!el.textContent){if(aiProvider()){if(TRQ.indexOf(sid)<0)TRQ.unshift(sid);pumpTr();}else openSent(sid);}
+}
 function applyReader(){
   const s=S.settings;const sh=$('#sheet');if(sh)sh.dataset.r=s.rtheme;
-  const t=$('#text');if(t){t.style.setProperty('--fs',s.fs+'px');t.style.setProperty('--lh',s.lh);t.className='hl-'+(s.flow?'none':s.hl)+(s.flow?' flow':'');const lg=(lessonById(cur)||{}).lang||'en';t.setAttribute('lang',lg);t.setAttribute('dir',RTL[lg]?'rtl':'ltr');if(RTL[lg]||NOSPACE[lg]||lg==='ko')t.classList.add('nodrop');if(NOSPACE[lg])t.classList.add('cjk');}
-  document.body.classList.toggle('noexpr',!s.expr);document.body.classList.toggle('nosbtn',!s.sbtn);
+  const t=$('#text');if(t){t.style.setProperty('--fs',s.fs+'px');t.style.setProperty('--lh',s.lh);
+    const lg=(lessonById(cur)||{}).lang||'en';
+    t.className='hl-'+(s.flow?'none':s.hl)+' lay-'+(s.layout==='page'?'page':'sent')+(trOn()?' trs':'')+(s.rfont==='serif'?' serif':'')+(s.flow?' flow':'')+(RTL[lg]?' rtl':'')+(NOSPACE[lg]?' cjk':'');
+    t.setAttribute('lang',lg);t.setAttribute('dir',RTL[lg]?'rtl':'ltr');}
+  document.body.classList.toggle('noexpr',!s.expr);
+  $$('.dock [data-tb="trans"]').forEach(b=>{b.classList.toggle('on',!!s.trans);b.setAttribute('aria-pressed',!!s.trans);b.hidden=s.layout==='page';});
+  $$('.dock [data-tb="flow"]').forEach(b=>{b.classList.toggle('on',!!s.flow);b.setAttribute('aria-pressed',!!s.flow);});
+}
+/* Aa: tudo o que muda o aspeto do texto num só sítio */
+function aaModal(){
+  const s=S.settings,L=lessonById(cur);
+  const seg=(k,opts,cur2)=>`<div class="seg full" role="group">${opts.map(o=>`<button class="${String(cur2)===String(o[0])?'on':''}" data-aa="${k}" data-v="${o[0]}">${o[1]}</button>`).join('')}</div>`;
+  setModal(`<div class="mhead"><h2>Texto</h2><button class="ibtn" data-close aria-label="Fechar">${I('x')}</button></div>
+  <div class="aa-size"><button class="btn" data-aa="fs" data-v="-1" aria-label="Diminuir texto"><span style="font-size:14px">A</span></button><div class="aa-val"><b id="aa-fs">${s.fs}</b><span>tamanho</span></div><button class="btn" data-aa="fs" data-v="1" aria-label="Aumentar texto"><span style="font-size:22px">A</span></button></div>
+  <div class="list">
+    <div class="li"><span>Letra</span>${seg('rfont',[['sans','Sistema'],['serif','Serifada']],s.rfont||'sans')}</div>
+    <div class="li"><span>Linhas</span>${seg('lh',[[1.4,'Juntas'],[1.6,'Normal'],[1.9,'Afastadas']],[1.4,1.6,1.9].reduce((a,b)=>Math.abs(b-s.lh)<Math.abs(a-s.lh)?b:a))}</div>
+    <div class="li"><span>Fundo</span><div class="tdots" role="group" aria-label="Fundo da página">${[['paper','Igual à app'],['sepia','Sépia'],['night','Noite']].map(k=>`<button class="t-${k[0]} ${s.rtheme===k[0]?'on':''}" data-aa="rt" data-v="${k[0]}" aria-label="${k[1]}" title="${k[1]}"></button>`).join('')}</div></div>
+  </div>
+  <div class="list">
+    <div class="li"><span>Vista</span>${seg('layout',[['sent','Frases'],['page','Página']],s.layout==='page'?'page':'sent')}</div>
+    <div class="li"><span>Cores</span>${seg('hl',[['all','Todas'],['new','Só novas'],['none','Nenhuma']],s.hl)}</div>
+    <div class="li"><span>Voz</span>${seg('rate',[[.8,'0,8×'],[1,'1×'],[1.2,'1,2×']],s.rate)}</div>
+    ${tog('aa-ex','Sublinhar expressões',s.expr)}
+  </div>
+  <div class="legend aa-leg"><span><i class="sw s0"></i>Nova</span><span><i class="sw s2"></i>A aprender</span><span><i class="sw sk"></i>Conhecida</span><span><i class="sw sx"></i>Expressão</span></div>
+  ${L&&L.imp?`<button class="btn danger wide" data-aa="del">Apagar ${(META[L.id]||{}).part?'livro':'texto'}</button>`:''}`,'Texto');
+  const mc=$('#mcard');
+  mc.onclick=e=>{const b=e.target.closest('[data-aa]');if(!b)return;const k=b.dataset.aa,v=b.dataset.v;
+    if(k==='fs'){s.fs=Math.max(15,Math.min(30,s.fs+ +v));$('#aa-fs').textContent=s.fs;}
+    else if(k==='del'){if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='Toca outra vez para apagar';return;}closeModal();deleteImport(cur);return;}
+    else{s[k==='rt'?'rtheme':k]=(k==='lh'||k==='rate')?+v:v;$$(`#mcard [data-aa="${k}"]`).forEach(x=>x.classList.toggle('on',x===b));
+      if(k==='rate'&&PL.on){stopPlay();PL.on=true;renderPlay();playFrom(PL.k);}
+      if(k==='layout')watchTr();}
+    applyReader();save();};
+  const ex=$('#aa-ex');if(ex)ex.onchange=()=>{s.expr=ex.checked;applyReader();save();};
 }
 function updateCov(){
   const L=lessonById(cur);const st=lessonStats(L);const el=$('#r-cov');if(!el)return;
-  el.innerHTML=`<div class="cov-top"><span><b>${st.pct}% conhecidas</b> · ${diffLabel(st.pct)}</span><span class="tnum">${st.learnTypes} a aprender · ${st.newTypes} novas</span></div>${meterHTML(st)}<div class="legend" style="margin-top:10px"><span><i class="sw" style="background:var(--new-bg);box-shadow:inset 0 -2px 0 var(--new)"></i>Nova</span><span><i class="sw" style="background:var(--hl1)"></i><i class="sw" style="background:var(--hl2);margin-left:-4px"></i><i class="sw" style="background:var(--hl3);margin-left:-4px"></i><i class="sw" style="background:var(--hl4);margin-left:-4px"></i>A aprender</span><span><i class="sw" style="border:1px solid var(--line-2)"></i>Conhecida</span><span><i class="sw" style="border-bottom:2px dotted var(--accent);border-radius:0;height:8px"></i>Expressão</span></div>`;
+  el.innerHTML=`<div class="cov-top"><span><b>${st.pct}%</b> conhecidas · ${diffLabel(st.pct)}</span><span class="tnum"><i class="dot d0"></i>${st.newTypes} novas <i class="dot d2"></i>${st.learnTypes} a aprender</span></div>${meterHTML(st)}`;
 }
 function refreshWords(){
+  const gs=G&&G.sid;
   $$('#text .w').forEach(w=>{
-    const tk=TOK[w.dataset.s][+w.dataset.i];const i=+w.dataset.i;
+    const sid=w.dataset.s,i=+w.dataset.i,tk=TOK[sid][i];
     let sel=false;
-    if(G&&G.sid===w.dataset.s){if(G.kind==='word'&&G.i===i)sel=true;if(G.kind==='phrase'&&i>=G.a&&i<=G.b)sel=true;}
-    w.className='w st'+stc(tk.l)+(tk.x!=null?' x':'')+(sel?' sel':'')+(isPend(w.dataset.s,i)?' pend':'');
+    if(gs===sid){if(G.kind==='word'&&G.i===i)sel=true;if(G.kind==='phrase'&&i>=G.a&&i<=G.b)sel=true;}
+    const c='w st'+stc(tk.l)+(tk.x!=null?' x':'')+(sel?' sel':'')+(isPend(sid,i)?' pend':'')+(w.classList.contains('spk')?' spk':'');
+    if(w.className!==c)w.className=c;
   });
+  $$('#text .sent.act').forEach(x=>{if(x.id!==gs)x.classList.remove('act');});
+  if(gs){const se=document.getElementById(gs);if(se)se.classList.add('act');}
   updateCov();
 }
-function renderPlay(){const b=$('#play');if(b)b.innerHTML=`<span class="pc">${I(PL.on?'pause':'play',14)}</span>${PL.on?'Pausar':'Ouvir texto'}`;}
+function renderPlay(){const b=$('#play');if(b){b.innerHTML=I(PL.on?'pause':'play',22);b.setAttribute('aria-label',PL.on?'Pausar':'Ouvir texto');b.classList.toggle('on',PL.on);}}
 
 /* ----- glosa ----- */
 let typeTimer=null;const AIC={};
@@ -599,20 +665,17 @@ $('#v-read').addEventListener('click',e=>{
   if(Date.now()-suppress<350)return;
   const w=e.target.closest('.w');if(w){if(S.settings.flow){togglePend(w);return;}if(e.shiftKey&&G&&G.kind==='word'&&G.sid===w.dataset.s&&G.i!==+w.dataset.i){const j=+w.dataset.i;openPhrase(G.sid,Math.min(G.i,j),Math.max(G.i,j));return;}openWord(w.dataset.s,+w.dataset.i);return;}
   const pw=e.target.closest('[data-pre]');if(pw){const p=pw.dataset.pre.split(':');openWord(p[0],+p[1]);const el=$(`#text .w[data-s="${p[0]}"][data-i="${p[1]}"]`);if(el)try{el.scrollIntoView({block:'center'});}catch(x){}return;}
-  const sb=e.target.closest('[data-sb]');if(sb){openSent(sb.dataset.sb);return;}
+  const sb=e.target.closest('[data-sb]');if(sb){if(S.settings.layout==='page')openSent(sb.dataset.sb);else revealTr(sb.dataset.sb);return;}
+  const tr=e.target.closest('.str');if(tr&&tr.textContent){openSent(tr.dataset.t);return;}
   const g=e.target.closest('[data-g]');if(g){glossAct(g.dataset.g,g);return;}
   const tb=e.target.closest('[data-tb]');
   if(tb){
     const a=tb.dataset.tb,s=S.settings;
-    if(a==='fsm'){s.fs=Math.max(16,s.fs-1);applyReader();}
-    else if(a==='fsp'){s.fs=Math.min(28,s.fs+1);applyReader();}
-    else if(a==='rt'){s.rtheme=tb.dataset.v;applyReader();$$('.tdots button').forEach(x=>x.classList.toggle('on',x.dataset.v===s.rtheme));}
-    else if(a==='hl'){s.hl=tb.dataset.v;applyReader();$$('[data-tb="hl"]').forEach(x=>x.classList.toggle('on',x.dataset.v===s.hl));}
-    else if(a==='rate'){s.rate=+tb.dataset.v;$$('[data-tb="rate"]').forEach(x=>x.classList.toggle('on',+x.dataset.v===s.rate));if(PL.on){stopPlay();PL.on=true;renderPlay();playFrom(PL.k);}}
+    if(a==='aa'){aaModal();return;}
+    else if(a==='trans'){s.trans=!s.trans;applyReader();watchTr();toast(s.trans?'Traduções visíveis':'Traduções escondidas · toca no ícone de cada frase para a ver');}
     else if(a==='play'){if(PL.on)stopPlay();else{PL.on=true;renderPlay();playFrom(G&&G.sid&&sentsOf(lessonById(cur)).indexOf(G.sid)>=0?sentsOf(lessonById(cur)).indexOf(G.sid):PL.k||0);}}
-    else if(a==='finish'){if(S.settings.flow&&pendList().length)pendModal(true);else finishModal();}
-    else if(a==='del'){if(tb.dataset.sure!=='1'){tb.dataset.sure='1';tb.textContent='Toca outra vez para apagar';return;}deleteImport(cur);return;}
-    else if(a==='flow'){s.flow=!s.flow;if(s.flow&&G)closeGloss();tb.classList.toggle('on',s.flow);tb.setAttribute('aria-pressed',s.flow);applyReader();refreshWords();renderPend();toast(s.flow?'Leitura contínua: toca nas palavras para as marcar e revê-as no fim':'Leitura contínua desligada',s.flow?'eye':null);}
+    else if(a==='finish'||a==='done'){if(S.settings.flow&&pendList().length)pendModal(true);else finishModal();}
+    else if(a==='flow'){s.flow=!s.flow;if(s.flow&&G)closeGloss();applyReader();refreshWords();renderPend();toast(s.flow?'Leitura contínua: toca nas palavras para as marcar e revê-as no fim':'Leitura contínua desligada',s.flow?'eye':null);}
     else if(a==='pend')pendModal(false);
     save();return;
   }
@@ -635,12 +698,13 @@ VR.addEventListener('contextmenu',e=>{if(e.target.closest&&e.target.closest('#te
 VR.addEventListener('mousedown',e=>{if(e.button!==0||S.settings.flow)return;const w=e.target.closest&&e.target.closest('#text .w');if(!w)return;DR.md=w;DR.x=e.clientX;DR.y=e.clientY;});
 document.addEventListener('mousemove',e=>{if(!DR.md)return;if(!DR.on){if(Math.abs(e.clientX-DR.x)+Math.abs(e.clientY-DR.y)<6)return;drStart(DR.md);}drMove(e.clientX,e.clientY);});
 document.addEventListener('mouseup',()=>{DR.md=null;if(DR.on)drEnd();});
-let scrT=0;
+let scrT=0,scrQ=false;
 window.addEventListener('scroll',()=>{
-  if(view!=='read')return;const tw=$('.textwrap'),bar=$('#rprog');if(!tw||!bar)return;
-  const r=tw.getBoundingClientRect();const p=Math.max(0,Math.min(1,(-r.top+120)/(r.height-window.innerHeight+120)));
-  bar.style.width=(p*100).toFixed(1)+'%';
-  clearTimeout(scrT);scrT=setTimeout(()=>{S.pos[cur]=Math.max(S.pos[cur]||0,p);save();},400);
+  if(view!=='read'||scrQ)return;scrQ=true;
+  requestAnimationFrame(()=>{scrQ=false;const tw=$('.textwrap'),bar=$('#rprog');if(!tw||!bar)return;
+    const r=tw.getBoundingClientRect();const p=Math.max(0,Math.min(1,(-r.top+120)/(r.height-window.innerHeight+120)));
+    bar.style.transform='scaleX('+p.toFixed(3)+')';document.body.classList.toggle('r-scrolled',r.top<40);
+    clearTimeout(scrT);scrT=setTimeout(()=>{S.pos[cur]=Math.max(S.pos[cur]||0,p);save();},400);});
 },{passive:true});
 
 /* ----- voz ----- */
@@ -729,10 +793,7 @@ function renderLib(){
   <div id="lib-shelves"></div>
   <div class="sec-h"><h2>Trazer o teu texto</h2></div>
   <div class="imp">
-    <label class="drop" id="drop" for="lib-file"><span style="display:grid;place-items:center;width:52px;height:52px;border-radius:16px;background:var(--surface);border:1px solid var(--line)">${I('upload',24)}</span><span class="big">Larga aqui um ficheiro</span><span class="muted" style="font-size:14px">PDF, EPUB, Word, HTML, legendas ou texto. Toca para escolher ou cola o texto.</span><input type="file" id="lib-file" accept="${IMPORT_ACCEPT}" hidden><span class="row" style="justify-content:center"><button type="button" class="btn sm" data-li="paste">Colar texto</button></span></label>
-    <div class="srcs">
-      ${[['file','PDF com texto','Carrega o leitor de PDF na primeira vez (precisa de internet)',true],['read','EPUB (livros)','Divide o livro em partes por capítulo',true],['note','Word (.docx), OpenDocument (.odt), RTF','Documentos de texto',true],['link','HTML, Markdown e texto (.txt)','Páginas guardadas e notas',true],['yt','Legendas (.srt, .vtt)','De filmes, séries ou YouTube',true],['eye','PDF digitalizado e imagens (OCR)','Versão real',false],['mic','Áudio e vídeo com transcrição (Whisper)','Versão real',false],['globe','Página web por link (extensão do browser)','Versão real',false]].map(x=>`<div class="src"><span class="si">${I(x[0])}</span><span class="grow"><b>${x[1]}</b><small>${x[2]}</small></span>${x[3]?`<span class="chip ok">${I('check',14)} Ativo</span>`:'<span class="chip">Em breve</span>'}</div>`).join('')}
-    </div>
+    <label class="drop" id="drop" for="lib-file"><span style="display:grid;place-items:center;width:52px;height:52px;border-radius:16px;background:var(--accent-soft);color:var(--accent)">${I('upload',24)}</span><span class="big">Larga aqui um ficheiro</span><span class="muted" style="font-size:14px">PDF, EPUB, Word, HTML, legendas ou texto. Toca para escolher ou cola o texto.</span><input type="file" id="lib-file" accept="${IMPORT_ACCEPT}" hidden><span class="row" style="justify-content:center"><button type="button" class="btn sm" data-li="paste">Colar texto</button></span></label>
   </div></div>`;
   renderShelves();
   const q=$('#lib-q');q.addEventListener('input',()=>{LF.q=q.value;renderShelves();});
@@ -1010,35 +1071,36 @@ function renderProg(){
 function tog(id,label,on,hint){return`<div class="tog"><span>${label}${hint?`<br><span class="muted" style="font-size:12.5px">${hint}</span>`:''}</span><label class="sw-t"><input type="checkbox" id="${id}" ${on?'checked':''} aria-label="${esc(label)}"><span></span></label></div>`;}
 function settingsModal(){
   const s=S.settings;
-  setModal(`<div class="mhead"><div><div class="eyebrow">Glosa</div><h2 style="margin-top:6px">Definições</h2></div><button class="ibtn" data-close aria-label="Fechar">${I('x')}</button></div>
-  <div class="set-sec" style="border:0;padding:0"><h3>Aparência</h3><div class="seg" role="group" aria-label="Tema">${[['auto','Automático'],['light','Claro'],['dark','Escuro']].map(t=>`<button class="${s.theme===t[0]?'on':''}" data-th="${t[0]}">${t[1]}</button>`).join('')}</div></div>
-  <div class="set-sec"><h3>Línguas</h3><div class="grid2"><div class="field"><label for="s-l1">Língua materna</label><select id="s-l1">${LANGS.map(x=>`<option value="${x.code}" ${x.code===(s.native||'pt')?'selected':''}>${esc(x.pt)}</option>`).join('')}</select></div><div class="field"><label for="s-l2">A aprender</label><select id="s-l2">${LANGS.map(x=>`<option value="${x.code}" ${x.code===tl()?'selected':''}>${esc(x.pt)}</option>`).join('')}</select></div></div>
-    <div class="field"><label for="s-ui">Língua da interface</label><select id="s-ui"><option>Português (Portugal)</option>${LANGS.filter(x=>x.code!=='pt').map(x=>`<option disabled>${esc(x.pt)} · versão real</option>`).join('')}</select><span class="hint">${(s.native||'pt').indexOf('pt')===0?'':'Na demo as traduções vêm em português. Na versão real vêm na tua língua materna. '}Na versão real, a interface fica traduzida para todas as línguas da lista.</span></div>
-    <button class="btn sm" id="s-langs" style="justify-self:start">${I('globe',16)} Ver todas as línguas</button></div>
+  const row=(label,ctl,sub)=>`<div class="li"><span>${label}${sub?`<small>${sub}</small>`:''}</span>${ctl}</div>`;
+  const sel=(id,opts,v)=>`<select id="${id}" class="li-sel">${opts.map(o=>`<option value="${esc(o[0])}" ${String(o[0])===String(v)?'selected':''}>${esc(o[1])}</option>`).join('')}</select>`;
+  const num=(id,v,min,step)=>`<input type="number" id="${id}" class="li-num" min="${min}" step="${step||1}" value="${v}" inputmode="numeric">`;
+  const L2=LANGS.map(x=>[x.code,x.pt]);
+  setModal(`<div class="mhead"><h2>Definições</h2><button class="ibtn" data-close aria-label="Fechar">${I('x')}</button></div>
+  <section class="grp"><h4>Línguas</h4><div class="list">
+    ${row('A aprender',sel('s-l2',L2,tl()))}
+    ${row('Língua materna',sel('s-l1',L2,s.native||'pt'),'Para traduções e explicações')}
+  </div></section>
+  <section class="grp"><h4>Aparência</h4><div class="list">
+    ${row('Tema',`<div class="seg" role="group" aria-label="Tema">${[['auto','Auto'],['light','Claro'],['dark','Escuro']].map(t=>`<button class="${s.theme===t[0]?'on':''}" data-th="${t[0]}">${t[1]}</button>`).join('')}</div>`)}
+  </div><p class="foot">Letra, tamanho, fundo e vista do texto mudam-se no leitor, no botão Aa.</p></section>
   ${aiSettingsHTML()}
-  <div class="set-sec"><h3>Leitura e voz</h3>
-    <div class="grid2"><div class="field"><label for="s-fs">Tamanho do texto · <span id="s-fs-v">${s.fs}px</span></label><input type="range" id="s-fs" min="16" max="28" value="${s.fs}"></div><div class="field"><label for="s-lh">Espaçamento · <span id="s-lh-v">${s.lh}</span></label><input type="range" id="s-lh" min="1.6" max="2.3" step="0.05" value="${s.lh}"></div></div>
-    <div class="field"><label for="s-voice">Voz do dispositivo (inglês)</label><select id="s-voice"><option value="">Automática (inglês britânico)</option>${VOICES.map(v=>`<option value="${esc(v.name)}" ${s.voice===v.name?'selected':''}>${esc(v.name)} · ${esc(v.lang)}</option>`).join('')}</select>${VOICES.length?'':'<span class="hint">Este navegador ainda não listou vozes em inglês.</span>'}</div>
-    ${tog('s-ex','Sublinhar expressões e phrasal verbs',s.expr)}${tog('s-sb','Botão de traduzir frase',s.sbtn)}</div>
-  <div class="set-sec"><h3>Metas diárias</h3><div class="grid3"><div class="field"><label for="g-r">Palavras</label><input type="number" id="g-r" min="10" step="10" value="${s.goal.r}"></div><div class="field"><label for="g-l">Minutos a ouvir</label><input type="number" id="g-l" min="1" value="${s.goal.l}"></div><div class="field"><label for="g-c">Cartões</label><input type="number" id="g-c" min="1" value="${s.goal.c}"></div></div></div>
-  <div class="set-sec"><h3>Conta e dados</h3><div class="src"><span class="si">${I('link')}</span><span class="grow"><b>Entrar com Google</b><small>Sincroniza telemóvel e PC (Supabase) · versão real</small></span><span class="chip">Em breve</span></div>
-    <div class="road">
-      <div>${I('check',18)}<span><b>Já funciona na demo:</b> leitor com estados de palavras, expressões, seleção de frases e leitura contínua, glossário antes de ler, prática (tradução inversa, ditado, ouvir e repetir), IA em contexto (pré-escrita), voz com destaque palavra a palavra, cartões em 4 modos com repetição espaçada, importação de PDF, EPUB, Word, ODT, HTML, Markdown, legendas, RTF e texto (com deteção da língua e livros divididos em partes), cópia de segurança, vocabulário, metas, estatísticas e exportação para Anki.</span></div>
-      <div>${I('clock',18)}<span><b>Falta para a versão real:</b> tradução e IA reais com cache (incluindo correção livre das tuas traduções e histórias novas), gravação de voz no shadowing, widget para Android, conta e sincronização, modo offline (PWA), extensão do browser, OCR de PDFs digitalizados e imagens, YouTube por link, áudio sincronizado com Whisper, algoritmo FSRS e lematização completa.</span></div></div>
-    <div class="row"><button class="btn sm" id="s-backup">${I('dl',16)} Cópia de segurança</button><button class="btn sm" id="s-reset" style="color:var(--bad);border-color:color-mix(in srgb,var(--bad) 45%,var(--line-2))">Começar do zero</button><button class="linkbtn" id="s-demo">Ver com dados de exemplo</button></div></div>`,'Definições');
+  <section class="grp"><h4>Metas diárias</h4><div class="list">
+    ${row('Palavras lidas',num('g-r',s.goal.r,10,10))}
+    ${row('Minutos a ouvir',num('g-l',s.goal.l,1))}
+    ${row('Cartões revistos',num('g-c',s.goal.c,1))}
+  </div></section>
+  <section class="grp"><h4>Dados</h4><div class="list">
+    <button class="li li-btn" id="s-backup"><span>Cópia de segurança<small>Guardar ou recuperar tudo num ficheiro</small></span>${I('chev',18)}</button>
+    <button class="li li-btn" id="s-demo"><span>Ver com dados de exemplo</span>${I('chev',18)}</button>
+    <button class="li li-btn bad" id="s-reset"><span>Começar do zero</span></button>
+  </div><p class="foot">Tudo fica guardado só neste dispositivo.</p></section>`,'Definições');
   const on=(id,ev,fn)=>{const el=document.getElementById(id);if(el)el.addEventListener(ev,fn);};
   $$('#mcard [data-th]').forEach(b=>b.onclick=()=>{s.theme=b.dataset.th;applyTheme();save();$$('#mcard [data-th]').forEach(x=>x.classList.toggle('on',x===b));});
-  on('s-l1','change',e=>{s.native=e.target.value;save();settingsModal();});
+  on('s-l1','change',e=>{s.native=e.target.value;save();});
   on('s-l2','change',e=>{setLang(e.target.value);settingsModal();});
-  on('s-langs','click',()=>langModal());
-  on('s-en','change',e=>{s.engine=e.target.value;save();});on('s-ai','change',e=>{s.llm=e.target.value;save();});
-  on('s-fs','input',e=>{s.fs=+e.target.value;$('#s-fs-v').textContent=s.fs+'px';applyReader();save();});
-  on('s-lh','input',e=>{s.lh=+e.target.value;$('#s-lh-v').textContent=s.lh;applyReader();save();});
-  on('s-voice','change',e=>{s.voice=e.target.value;save();say('Hello! This is how I sound.');});
-  on('s-ex','change',e=>{s.expr=e.target.checked;applyReader();save();});on('s-sb','change',e=>{s.sbtn=e.target.checked;applyReader();save();});
-  on('g-r','input',e=>{s.goal.r=Math.max(10,+e.target.value||10);save();updateChrome();});
-  on('g-l','input',e=>{s.goal.l=Math.max(1,+e.target.value||1);save();updateChrome();});
-  on('g-c','input',e=>{s.goal.c=Math.max(1,+e.target.value||1);save();updateChrome();});
+  on('g-r','change',e=>{s.goal.r=Math.max(10,+e.target.value||10);e.target.value=s.goal.r;save();updateChrome();});
+  on('g-l','change',e=>{s.goal.l=Math.max(1,+e.target.value||1);e.target.value=s.goal.l;save();updateChrome();});
+  on('g-c','change',e=>{s.goal.c=Math.max(1,+e.target.value||1);e.target.value=s.goal.c;save();updateChrome();});
   on('s-backup','click',()=>backupModal());
   bindAISettings();
   on('s-reset','click',()=>resetModal());

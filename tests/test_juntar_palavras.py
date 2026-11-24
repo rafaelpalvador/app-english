@@ -47,11 +47,12 @@ async def main():
     await pg.screenshot(path='shots/j_member_m.png')
     # saved phrase appears in Palavras > Expressões
     await pg.locator('[data-g="close"]').click()
-    await pg.locator('#tb-words').click();await pg.locator('[data-wf="phrase"]').click();await pg.wait_for_timeout(200)
+    await pg.evaluate("()=>{if(view==='read')go('lib')}");await pg.locator('#tb-words').click();await pg.locator('[data-wf="phrase"]').click();await pg.wait_for_timeout(200)
     print('words/phrases list:',(await pg.locator('#w-list').inner_text())[:120].replace('\n',' | '))
     print('mobile errors:',errs or 'none');await ctx.close()
     # ---------- desktop: mouse drag + shift click ----------
     pg=await b.new_page(viewport={'width':1366,'height':900});errs=[];pg.on('pageerror',lambda e: errs.append(str(e)))
+    pg.set_default_timeout(6000)
     await pg.goto('file://'+os.path.abspath(APP));await pg.wait_for_timeout(700)
     await pg.locator('[data-nav="lib"]:visible').first.click();await pg.locator('.book[data-lesson="t3"]').click();await pg.wait_for_timeout(300)
     a=pg.locator('#text .w[data-s="t3s5"]',has_text='steered').first;c=pg.locator('#text .w[data-s="t3s5"]',has_text='away').first

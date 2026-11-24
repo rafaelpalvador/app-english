@@ -13,7 +13,7 @@ function togglePend(w){
 }
 function renderPend(){
   const b=$('#pend-btn');if(!b)return;const n=pendList().length;
-  b.hidden=!S.settings.flow;b.innerHTML=`${I('note',15)} Marcadas <span class="badge" style="margin-left:2px">${n}</span>`;b.disabled=!n;
+  b.hidden=!S.settings.flow;b.innerHTML=`${I('note',22)}${n?`<span class="badge">${n}</span>`:''}`;b.disabled=!n;b.setAttribute('aria-label','Palavras marcadas: '+n);
 }
 function pendModal(thenFinish){
   const seen={},rows=[];
@@ -42,7 +42,7 @@ function renderPre(){
   const top=Object.keys(f).map(l=>Object.assign({l:l},f[l])).sort((a,b)=>(a.s===0?0:1)-(b.s===0?0:1)||b.n-a.n||a.o-b.o).slice(0,5);
   if(!top.length){el.innerHTML='';el.hidden=true;return;}
   el.hidden=false;
-  el.innerHTML=`<div class="row between" style="margin-bottom:10px"><span class="eyebrow">Antes de ler · 5 palavras úteis</span><span class="muted" style="font-size:12.5px">toca para ver no texto</span></div><div class="pre-chips">${top.map(x=>`<button class="pchip" data-pre="${x.sid}:${x.i}"><b>${esc(x.l)}</b><span>${esc(DICT[x.l].pt.split(/[;,]/)[0])}</span>${x.n>1?`<small>${x.n}×</small>`:''}</button>`).join('')}</div>`;
+  el.innerHTML=`<div class="pre-h">Antes de ler</div><div class="pre-chips">${top.map(x=>`<button class="pchip" data-pre="${x.sid}:${x.i}"><b>${esc(x.l)}</b><span>${esc(DICT[x.l].pt.split(/[;,]/)[0])}</span>${x.n>1?`<small>${x.n}×</small>`:''}</button>`).join('')}</div>`;
 }
 
 /* ---------- pausa na revisão ---------- */
