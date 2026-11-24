@@ -3,12 +3,15 @@ package pt.glosa.app;
 import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Intent;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
+import android.view.View;
+import android.view.Window;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -43,6 +46,7 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle state) {
         super.onCreate(state);
         web = new WebView(this);
+        web.setBackgroundColor(getResources().getColor(R.color.paper, getTheme()));
         setContentView(web);
 
         final WebViewAssetLoader loader = new WebViewAssetLoader.Builder()
@@ -137,6 +141,24 @@ public class MainActivity extends Activity {
 
     /** Funções chamadas pela página: window.GlosaAndroid.* */
     private class Bridge {
+        /** Pinta as barras do sistema com a cor da app (muda com o tema claro/escuro e o leitor). */
+        @JavascriptInterface
+        public void setBars(final String top, final String bottom, final boolean lightTop, final boolean lightBottom) {
+            runOnUiThread(() -> {
+                try {
+                    Window w = getWindow();
+                    w.setStatusBarColor(Color.parseColor(top));
+                    w.setNavigationBarColor(Color.parseColor(bottom));
+                    View d = w.getDecorView();
+                    int f = d.getSystemUiVisibility();
+                    f = lightTop ? (f | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR) : (f & ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+                    f = lightBottom ? (f | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR) : (f & ~View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
+                    d.setSystemUiVisibility(f);
+                    web.setBackgroundColor(Color.parseColor(bottom));
+                } catch (Exception ignored) { }
+            });
+        }
+
         @JavascriptInterface
         public boolean ready() { return ttsReady; }
 

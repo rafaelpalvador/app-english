@@ -1664,7 +1664,7 @@ function go(v,silent){
   if(v!=='practice'&&REP.on)stopRep();
   view=v;
   $$('.view').forEach(s=>{s.hidden=s.id!=='v-'+v;});
-  document.body.classList.toggle('reading-open',v==='read'&&!!G);document.body.classList.toggle('in-read',v==='read');document.body.classList.remove('r-scrolled');
+  document.body.classList.toggle('reading-open',v==='read'&&!!G);document.body.classList.toggle('in-read',v==='read');document.body.classList.remove('r-scrolled');syncBars();
   if(v==='home')renderHome();else if(v==='read')renderRead();else if(v==='lib')renderLib();else if(v==='review'){R.phase='start';renderReview();}else if(v==='words')renderWords();else if(v==='practice')renderPractice();else if(v==='prog')renderProg();
   renderNav();
   try{if(location.hash!=='#'+HASH[v])history.replaceState(null,'','#'+HASH[v]);}catch(e){try{location.hash=HASH[v];}catch(e2){}}
@@ -1806,7 +1806,7 @@ function applyReader(){
     const lg=(lessonById(cur)||{}).lang||'en';
     t.className='hl-'+(s.flow?'none':s.hl)+' lay-'+(s.layout==='page'?'page':'sent')+(trOn()?' trs':'')+(s.rfont==='serif'?' serif':'')+(s.flow?' flow':'')+(RTL[lg]?' rtl':'')+(NOSPACE[lg]?' cjk':'');
     t.setAttribute('lang',lg);t.setAttribute('dir',RTL[lg]?'rtl':'ltr');}
-  document.body.classList.toggle('noexpr',!s.expr);
+  document.body.classList.toggle('noexpr',!s.expr);syncBars();
   $$('.dock [data-tb="trans"]').forEach(b=>{b.classList.toggle('on',!!s.trans);b.setAttribute('aria-pressed',!!s.trans);b.hidden=s.layout==='page';});
   $$('.dock [data-tb="flow"]').forEach(b=>{b.classList.toggle('on',!!s.flow);b.setAttribute('aria-pressed',!!s.flow);});
 }
@@ -2508,7 +2508,26 @@ function settingsModal(){
   on('s-reset','click',()=>resetModal());
   on('s-demo','click',()=>demoModal());
 }
-function applyTheme(){const t=S.settings.theme;if(t==='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',t);}
+function applyTheme(){const t=S.settings.theme;if(t==='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',t);syncBars();}
+/* Android: as barras do sistema (relógio em cima, navegação em baixo) acompanham a cor da app */
+function syncBars(){
+  const A=window.GlosaAndroid;if(!A||typeof A.setBars!=='function')return;
+  requestAnimationFrame(()=>{try{
+    const rgb=c=>{c=String(c).trim();if(c[0]==='#'){const h=c.length===4?c.slice(1).split('').map(x=>x+x).join(''):c.slice(1,7);return[0,2,4].map(i=>parseInt(h.substr(i,2),16));}const m=c.match(/[\d.]+/g)||[0,0,0];return m.map(Number);};
+    const solid=(fg,bg)=>{const f=rgb(fg),b=rgb(bg),a=f.length>3?f[3]:1;return[0,1,2].map(i=>Math.round(f[i]*a+b[i]*(1-a)));};
+    const hex=c=>'#'+c.map(x=>x.toString(16).padStart(2,'0')).join('');
+    const light=c=>(c[0]*299+c[1]*587+c[2]*114)/1000>150;
+    const inRead=view==='read'&&!window.matchMedia('(min-width:1000px)').matches;
+    const sh=inRead&&document.getElementById('sheet');
+    const base=sh||document.documentElement;const cs=getComputedStyle(base);
+    const bg=cs.getPropertyValue('--bg').trim()||'#000';
+    const bar=cs.getPropertyValue('--bar').trim()||bg;
+    const top=solid(bar,bg),bottom=inRead?solid(bg,bg):top;
+    const k=hex(top)+hex(bottom);if(syncBars.k===k)return;syncBars.k=k;
+    A.setBars(hex(top),hex(bottom),light(top),light(bottom));
+  }catch(e){}});
+}
+try{window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>syncBars());}catch(e){}
 
 /* =========================================================
    eventos globais e arranque
