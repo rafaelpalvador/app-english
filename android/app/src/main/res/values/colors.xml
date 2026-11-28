@@ -2,4 +2,5 @@
 <resources>
     <color name="paper">#E9ECF4</color>
     <color name="ink">#141413</color>
+    <color name="logo_bg">#2F3FD0</color>
 </resources>
