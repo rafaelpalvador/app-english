@@ -1,0 +1,3 @@
+Lora — Copyright 2011 The Lora Project Authors (https://github.com/cyrealtype/Lora-Cyrillic)
+Licença: SIL Open Font License 1.1 (https://openfontlicense.org)
+Versão reduzida aos alfabetos latino, grego e cirílico, usada no Glosa para títulos e leitura.

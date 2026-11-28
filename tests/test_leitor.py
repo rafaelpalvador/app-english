@@ -19,6 +19,8 @@ async def run(b,vp,tag):
     print(tag,'imported:',r)
     assert r['view']=='read' and all(s.startswith('tradução') for s in r['strs']) and r['calls']==1, r
     await pg.screenshot(path=f'shots/leitor_{tag}.png')
+    # glosa: a palavra selecionada mostra a tradução por cima (se houver)
+    gl=await pg.evaluate("()=>[document.getElementById('text').classList.contains('gls'),S.settings.gl,S.settings.rfont]");print(tag,'glosas:',gl);assert gl[0] and gl[1]=='learn'
     # tocar na tradução abre a explicação da frase
     await pg.locator('#text .str').first.click();await pg.wait_for_timeout(300)
     k=await pg.evaluate("()=>G&&G.kind");print(tag,'tap translation ->',k);assert k=='sent'

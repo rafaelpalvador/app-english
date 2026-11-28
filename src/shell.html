@@ -3,53 +3,58 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#F5F5F7" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#E9ECF4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0B0F29" media="(prefers-color-scheme: dark)">
 <title>Glosa</title>
 <style>
+/*__FONTS__*/
 :root{
-  /* Glosa — calm, native, fluid.
-     System fonts, grouped surfaces, one blue accent.
-     Learning colours follow LingQ: blue = new, yellow = being learned, nothing = known. */
-  --bg:#F5F5F7; --surface:#FFFFFF; --surface-2:#EDEDF0; --sheet:#FFFFFF; --fill:rgba(120,120,128,.12); --fill-2:rgba(120,120,128,.2);
-  --ink:#1D1D1F; --ink-2:#3C3C43; --muted:#86868B; --line:rgba(60,60,67,.12); --line-2:rgba(60,60,67,.22);
-  --accent:#007AFF; --accent-ink:#FFFFFF; --accent-soft:rgba(0,122,255,.12);
-  --hl1:rgba(255,204,0,.62); --hl2:rgba(255,204,0,.46); --hl3:rgba(255,204,0,.32); --hl4:rgba(255,204,0,.18);
-  --new:#007AFF; --new-bg:rgba(0,122,255,.15);
-  --known:#248A3D; --bad:#E5352B; --warn:#B07A00;
-  --f-u:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI Variable','Segoe UI',Roboto,'Helvetica Neue',system-ui,sans-serif;
-  --f-d:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI Variable Display','Segoe UI',Roboto,'Helvetica Neue',system-ui,sans-serif;
-  --f-serif:'New York','Iowan Old Style','Charter','Georgia',serif;
-  --f-r:var(--f-u);
-  --nav:58px; --rad:18px;
+  /* Glosa — identidade "glosa interlinear".
+     Uma glosa é a nota escrita por cima de uma palavra, nos manuscritos.
+     Tinta de lápis-lazúli sobre papel azulado, glosas em ouro.
+     Azul = palavra nova, ouro = a aprender, sem cor = conhecida. */
+  --bg:#E9ECF4; --surface:#FFFFFF; --surface-2:#F3F4F9; --sheet:#FFFFFF; --fill:rgba(26,32,84,.06); --fill-2:rgba(26,32,84,.11);
+  --ink:#161B44; --ink-2:#3B416E; --muted:#71769E; --line:rgba(26,32,84,.10); --line-2:rgba(26,32,84,.2);
+  --accent:#2F3FD0; --accent-ink:#FFFFFF; --accent-soft:rgba(47,63,208,.10);
+  --gold:#E9B32A; --gold-ink:#8C6300;
+  --hl1:rgba(233,179,42,.55); --hl2:rgba(233,179,42,.40); --hl3:rgba(233,179,42,.27); --hl4:rgba(233,179,42,.15);
+  --new:#2F3FD0; --new-bg:rgba(47,63,208,.12);
+  --known:#1B8466; --bad:#C8364A; --warn:#8C6300;
+  --f-u:-apple-system,BlinkMacSystemFont,'Segoe UI Variable','Segoe UI',Roboto,'Helvetica Neue',system-ui,sans-serif;
+  --f-d:'Lora','Iowan Old Style',Georgia,serif;
+  --f-serif:'Lora','Iowan Old Style',Georgia,serif;
+  --f-r:var(--f-serif);
+  --nav:60px; --rad:24px;
   --ease:cubic-bezier(.32,.72,0,1);
-  --bar:rgba(245,245,247,.78);
-  --shadow:0 1px 2px rgba(0,0,0,.04),0 2px 10px rgba(0,0,0,.03);
-  --shadow-lg:0 22px 70px -12px rgba(0,0,0,.25),0 0 0 .5px rgba(0,0,0,.05);
+  --bar:rgba(233,236,244,.82);
+  --shadow:none;
+  --shadow-lg:0 30px 80px -20px rgba(22,27,68,.35),0 0 0 1px rgba(26,32,84,.06);
   color-scheme:light;
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
-    --bg:#000000; --surface:#1C1C1E; --surface-2:#2C2C2E; --sheet:#1C1C1E; --fill:rgba(118,118,128,.24); --fill-2:rgba(118,118,128,.32);
-    --ink:#F5F5F7; --ink-2:#D1D1D6; --muted:#98989D; --line:rgba(84,84,88,.6); --line-2:rgba(84,84,88,.9);
-    --accent:#0A84FF; --accent-ink:#FFFFFF; --accent-soft:rgba(10,132,255,.2);
-    --hl1:rgba(255,214,10,.5); --hl2:rgba(255,214,10,.36); --hl3:rgba(255,214,10,.25); --hl4:rgba(255,214,10,.14);
-    --new:#409CFF; --new-bg:rgba(10,132,255,.28); --known:#30D158; --bad:#FF453A; --warn:#FFD60A;
-    --bar:rgba(22,22,24,.78); --shadow:none; --shadow-lg:0 22px 70px -10px rgba(0,0,0,.8),0 0 0 .5px rgba(255,255,255,.08);
+    --bg:#0B0F29; --surface:#151A3C; --surface-2:#1C2249; --sheet:#121736; --fill:rgba(190,198,255,.08); --fill-2:rgba(190,198,255,.15);
+    --ink:#E9EBFA; --ink-2:#C4C8EA; --muted:#8D92BE; --line:rgba(190,198,255,.12); --line-2:rgba(190,198,255,.24);
+    --accent:#8B97FF; --accent-ink:#0B0F29; --accent-soft:rgba(139,151,255,.16);
+    --gold:#F2C64E; --gold-ink:#F2C64E;
+    --hl1:rgba(242,198,78,.45); --hl2:rgba(242,198,78,.32); --hl3:rgba(242,198,78,.22); --hl4:rgba(242,198,78,.12);
+    --new:#9FA9FF; --new-bg:rgba(139,151,255,.22); --known:#4FCB9F; --bad:#FF7A8A; --warn:#F2C64E;
+    --bar:rgba(11,15,41,.82); --shadow-lg:0 30px 80px -16px rgba(0,0,0,.7),0 0 0 1px rgba(190,198,255,.1);
     color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
-  --bg:#000000; --surface:#1C1C1E; --surface-2:#2C2C2E; --sheet:#1C1C1E; --fill:rgba(118,118,128,.24); --fill-2:rgba(118,118,128,.32);
-  --ink:#F5F5F7; --ink-2:#D1D1D6; --muted:#98989D; --line:rgba(84,84,88,.6); --line-2:rgba(84,84,88,.9);
-  --accent:#0A84FF; --accent-ink:#FFFFFF; --accent-soft:rgba(10,132,255,.2);
-  --hl1:rgba(255,214,10,.5); --hl2:rgba(255,214,10,.36); --hl3:rgba(255,214,10,.25); --hl4:rgba(255,214,10,.14);
-  --new:#409CFF; --new-bg:rgba(10,132,255,.28); --known:#30D158; --bad:#FF453A; --warn:#FFD60A;
-  --bar:rgba(22,22,24,.78); --shadow:none; --shadow-lg:0 22px 70px -10px rgba(0,0,0,.8),0 0 0 .5px rgba(255,255,255,.08);
-  color-scheme:dark;
+    --bg:#0B0F29; --surface:#151A3C; --surface-2:#1C2249; --sheet:#121736; --fill:rgba(190,198,255,.08); --fill-2:rgba(190,198,255,.15);
+    --ink:#E9EBFA; --ink-2:#C4C8EA; --muted:#8D92BE; --line:rgba(190,198,255,.12); --line-2:rgba(190,198,255,.24);
+    --accent:#8B97FF; --accent-ink:#0B0F29; --accent-soft:rgba(139,151,255,.16);
+    --gold:#F2C64E; --gold-ink:#F2C64E;
+    --hl1:rgba(242,198,78,.45); --hl2:rgba(242,198,78,.32); --hl3:rgba(242,198,78,.22); --hl4:rgba(242,198,78,.12);
+    --new:#9FA9FF; --new-bg:rgba(139,151,255,.22); --known:#4FCB9F; --bad:#FF7A8A; --warn:#F2C64E;
+    --bar:rgba(11,15,41,.82); --shadow-lg:0 30px 80px -16px rgba(0,0,0,.7),0 0 0 1px rgba(190,198,255,.1);
+    color-scheme:dark;
 }
-.sheet[data-r="sepia"]{--sheet:#F8F1E3;--bg:#F8F1E3;--ink:#3B2F20;--ink-2:#5B4C39;--muted:#9A8A72;--line:rgba(90,70,40,.15);--surface-2:#EFE5D1;--fill:rgba(120,90,40,.1);--bar:rgba(248,241,227,.82);--new-bg:rgba(0,122,255,.13);color:var(--ink);background:var(--sheet)}
-.sheet[data-r="night"]{--sheet:#121214;--bg:#121214;--ink:#E3E1DC;--ink-2:#C2BFB8;--muted:#8C8A85;--line:rgba(255,255,255,.1);--surface-2:#202024;--fill:rgba(255,255,255,.08);--bar:rgba(18,18,20,.82);--new:#64A8FF;--new-bg:rgba(10,132,255,.26);--hl1:rgba(255,214,10,.48);--hl2:rgba(255,214,10,.34);--hl3:rgba(255,214,10,.23);--hl4:rgba(255,214,10,.13);color:var(--ink);background:var(--sheet)}
+.sheet[data-r="sepia"]{--sheet:#F4ECDC;--bg:#F4ECDC;--ink:#33281A;--ink-2:#54462F;--muted:#8E7F66;--line:rgba(90,70,40,.15);--surface-2:#EAE0CB;--fill:rgba(120,90,40,.09);--bar:rgba(244,236,220,.86);--new-bg:rgba(47,63,208,.11);--gold-ink:#7A5400;color:var(--ink);background:var(--sheet)}
+.sheet[data-r="night"]{--sheet:#06081A;--bg:#06081A;--ink:#DCDEF0;--ink-2:#B9BCD8;--muted:#7E82A8;--line:rgba(190,198,255,.1);--surface-2:#141938;--fill:rgba(190,198,255,.07);--bar:rgba(6,8,26,.86);--new:#9FA9FF;--new-bg:rgba(139,151,255,.2);--gold-ink:#F2C64E;--hl1:rgba(242,198,78,.42);--hl2:rgba(242,198,78,.3);--hl3:rgba(242,198,78,.2);--hl4:rgba(242,198,78,.11);color:var(--ink);background:var(--sheet)}
 
 /* ============ shell ============ */
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -743,6 +748,102 @@ svg.ch .gs2{stop-color:var(--ink);stop-opacity:0}
 .toast{position:fixed;z-index:80;left:50%;top:calc(12px + env(safe-area-inset-top,0px));transform:translate(-50%,-140%);display:flex;align-items:center;gap:10px;background:var(--bar);backdrop-filter:saturate(180%) blur(24px);-webkit-backdrop-filter:saturate(180%) blur(24px);color:var(--ink);padding:12px 18px;border-radius:999px;font-size:14px;font-weight:600;pointer-events:none;transition:transform .45s var(--ease),opacity .3s;opacity:0;max-width:calc(100vw - 32px);box-shadow:0 10px 30px -8px rgba(0,0,0,.25),0 0 0 .5px var(--line)}
 .toast svg{display:block;color:var(--known);flex:none}
 .toast.show{opacity:1;transform:translate(-50%,0)}
+/* ============ identidade: glosa interlinear ============ */
+body{background:var(--bg)}
+h1,h2,h3{font-family:var(--f-d);font-weight:600;letter-spacing:-.012em}
+.page-h h1{font:600 clamp(36px,6vw,58px)/1.02 var(--f-d);letter-spacing:-.02em}
+.sec-h h2,.card h3,.mcard h2,.empty-state h2{font-family:var(--f-d);font-weight:600;letter-spacing:-.01em}
+.eyebrow{font:500 13px/1.3 var(--f-u);color:var(--muted)}
+/* logótipo: "Glosa" com um traço de ouro por cima do o, como as marcas de abreviatura dos copistas */
+.logo{position:relative;font:600 24px/1 var(--f-d);letter-spacing:-.02em;color:var(--ink);padding-top:4px}
+.logo .dot{position:absolute;top:-1px;left:1.16em;width:.46em;height:.11em;border-radius:.1em;background:var(--gold);transform:rotate(-8deg);margin:0}
+/* botões: pílulas; principal em lápis-lazúli */
+.btn{border-radius:999px;background:var(--accent-soft);color:var(--accent);font-weight:600}
+.btn:hover{background:color-mix(in srgb,var(--accent) 16%,transparent)}
+.btn.pri,.btn.blue{background:var(--accent);color:var(--accent-ink)}
+.btn.sm{border-radius:999px}.btn.xs{border-radius:999px}
+.card{box-shadow:none}
+.chip{background:var(--surface);color:var(--ink-2)}
+#tb-lang{background:var(--accent);color:var(--accent-ink)}
+.ibtn{color:var(--ink-2)}
+.seg{background:var(--fill)}
+.seg button.on{background:var(--surface);color:var(--accent);box-shadow:0 1px 2px rgba(22,27,68,.12)}
+:root[data-theme="dark"] .seg button.on,:root[data-theme="dark"] .g-tabs button.on{background:var(--surface-2);color:var(--accent)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .seg button.on,:root:not([data-theme="light"]) .g-tabs button.on{background:var(--surface-2);color:var(--accent)}}
+.g-tabs button.on{color:var(--accent)}
+.m-l{background:var(--gold)}
+.lvl i.on{background:var(--gold)}
+.dot.d2{background:var(--gold)}
+/* barra de baixo: o separador ativo ganha uma glosa de ouro por cima */
+.tabbar{box-shadow:none;border-top:1px solid var(--line)}
+.tabbar button[aria-current="page"]::before{content:"";position:absolute;top:7px;left:50%;width:16px;height:3px;margin-left:-8px;border-radius:2px;background:var(--gold);transform:rotate(-8deg)}
+.tabbar button[aria-current="page"] .ti{color:var(--accent)}
+.topbar{box-shadow:none}
+@media (min-width:1000px){
+  .rail{box-shadow:none;border-bottom:1px solid var(--line)}
+  .rnav button[aria-current="page"]{background:transparent;color:var(--accent);font-weight:600}
+  .rnav button[aria-current="page"]::before{content:"";position:absolute;top:1px;left:50%;width:18px;height:3px;margin-left:-9px;border-radius:2px;background:var(--gold);transform:rotate(-8deg)}
+}
+/* Hoje: o texto em curso é o bloco de lápis-lazúli */
+.home-grid>.card.cont{background:var(--accent)!important;color:#fff;padding:24px!important}
+.cont h2{color:#fff;font-weight:600}
+.cont .blurb,.cont .muted,.cont .eyebrow{color:rgba(255,255,255,.72)!important}
+.cont b{color:#fff}
+.cont .meter{background:rgba(255,255,255,.18)}
+.cont .m-k{background:#fff}.cont .m-n{background:rgba(255,255,255,.4)}
+.cont .btn.pri{background:#fff;color:#2F3FD0}
+:root[data-theme="dark"] .home-grid>.card.cont{background:#2F3FD0!important}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .home-grid>.card.cont{background:#2F3FD0!important}}
+.cont .cover{box-shadow:0 12px 30px -10px rgba(0,0,0,.45)}
+.due-card .n{font:600 76px/1 var(--f-d);color:var(--accent);letter-spacing:-.03em}
+.w-big{font-family:var(--f-d);font-weight:600}
+.wod q{font-family:var(--f-d)}
+.demo-bar{background:var(--surface);border-left:4px solid var(--gold);border-radius:6px 16px 16px 6px}
+/* listas agrupadas */
+.grp h4{font:500 13px/1.2 var(--f-u);text-transform:none;letter-spacing:0;color:var(--muted)}
+.list,.wl,.srcs{border-radius:16px}
+.li-sel{color:var(--accent)}
+.sw-t input:checked+span{background:var(--accent)}
+.ok-dot{background:var(--known)}
+/* folhas e janelas */
+.mcard{background:var(--bg)}
+.mcard h2{font-size:28px}
+.toast{border-radius:14px;background:var(--ink);color:var(--bg);box-shadow:var(--shadow-lg)}
+.toast svg{color:var(--gold)}
+/* leitor */
+.sheet{background:var(--sheet)}
+.rbar{background:var(--bar)}
+.rb-i{color:var(--ink-2)}
+.rb-prog i{background:var(--gold)}
+.r-head h1{font-weight:600}
+.pchip{background:var(--surface-2);box-shadow:none;border-radius:999px}
+.pchip b{font-family:var(--f-d);font-weight:600}
+.pchip small{color:var(--gold-ink)}
+.sent.act,.sent.playing{background:var(--accent-soft)}
+.str{font-family:var(--f-serif);color:var(--muted)}
+.dk-play{background:var(--accent)!important;color:var(--accent-ink)!important}
+.dk-grp button.on{color:var(--accent);background:var(--accent-soft)}
+.dk-fin{color:var(--known)!important}
+.dock>button,.dk-grp{box-shadow:0 10px 30px -8px rgba(22,27,68,.35),0 0 0 1px var(--line)}
+.w.sel{background:var(--accent)!important;color:var(--accent-ink)}
+.st-row button.on{background:var(--gold);color:#1B1400}
+.st-row .b0.on{background:var(--accent);color:var(--accent-ink)}
+.g-word{font:600 34px/1.1 var(--f-d);letter-spacing:-.015em}
+.g-tr{font:italic 500 22px/1.3 var(--f-d);color:var(--gold-ink);letter-spacing:0}
+.g-ctx{font-family:var(--f-serif)}
+.gloss{background:var(--surface)}
+/* a glosa por cima da palavra */
+#text.gls{line-height:max(var(--lh,1.6),2.15)}
+#text.gls .w[data-gl]{position:relative}
+#text.gls .w[data-gl]::before{content:attr(data-gl);position:absolute;left:50%;bottom:calc(100% - .12em);transform:translateX(-50%);font:italic 500 .56em/1 var(--f-serif);letter-spacing:0;color:var(--gold-ink);white-space:nowrap;max-width:10em;overflow:hidden;text-overflow:ellipsis;pointer-events:none;text-shadow:0 0 3px var(--sheet),0 0 3px var(--sheet)}
+#text.gls .w.sel[data-gl]::before{color:var(--accent)}
+#text.cjk.gls .w[data-gl]::before,#text.rtl.gls .w[data-gl]::before{font-family:var(--f-u)}
+.sw.sg{width:auto;height:auto;font:italic 500 11px/1 var(--f-serif);color:var(--gold-ink);background:none}
+/* rever e praticar */
+.face{border-radius:28px}
+.face .fw,.face h2{font-family:var(--f-d)}
+.modes .mode.on{background:var(--accent);color:var(--accent-ink);box-shadow:none}
+.kpi .v,.stat .v{font-family:var(--f-d);font-weight:600}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 </style>
 </head>

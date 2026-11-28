@@ -69,7 +69,7 @@ function hashStr(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt
 
 /* ---------- estado ---------- */
 const KEY='glosa-v2';
-function baseSettings(){return{flow:false,fs:20,lh:1.6,rtheme:'paper',hl:'all',rate:1,voice:'',expr:true,layout:'sent',trans:true,rfont:'sans',theme:'auto',goal:{r:250,l:10,c:20},engine:'deepl',llm:'gemini',prio:true};}
+function baseSettings(){return{flow:false,fs:20,lh:1.6,rtheme:'paper',hl:'all',rate:1,voice:'',expr:true,layout:'sent',trans:true,rfont:'serif',gl:'learn',theme:'auto',goal:{r:250,l:10,c:20},engine:'deepl',llm:'gemini',prio:true};}
 /* estado inicial: vazio, sem dados de exemplo */
 function defaults(){return{vocab:{},days:{},texts:{},pos:{},imported:[],last:'t1',pend:{},log:[],kh:{},settings:baseSettings()};}
 /* dados de exemplo, só quando a pessoa os pede (Definições → Os teus dados) */
@@ -108,7 +108,7 @@ function load(){
     const raw=localStorage.getItem(KEY);
     if(raw){const o=JSON.parse(raw);Object.assign(d,o);d.settings=Object.assign(defaults().settings,o.settings||{});d.settings.goal=Object.assign(defaults().settings.goal,(o.settings&&o.settings.goal)||{});}
   }catch(e){}
-  if(d.settings&&d.settings.lh>1.9&&!(d.settings._v>=3)){d.settings.lh=1.6;}if(d.settings)d.settings._v=3;
+  if(d.settings&&d.settings.lh>1.9&&!(d.settings._v>=3)){d.settings.lh=1.6;}if(d.settings&&!(d.settings._v>=4)){d.settings.rfont='serif';d.settings.gl='learn';}if(d.settings)d.settings._v=4;
   // dados de exemplo gravados por versões antigas da app
   if(d.demo===undefined&&Array.isArray(d.log)&&d.log.length>=200&&d.vocab.decide&&d.vocab.decide.ctx&&d.vocab.decide.ctx.sid==='t1s1'){d.demo=true;d.base=640;}
   return d;
@@ -347,7 +347,7 @@ function renderRead(){
   </div>
   <aside class="gloss" id="gloss" aria-label="Glosa"><div class="g-handle" id="g-handle" aria-hidden="true"><i></i></div><div class="g-scroll" id="gscroll"></div></aside>
   </div>`;
-  renderText();applyReader();updateCov();renderPre();renderPend();renderPlay();renderGloss();bindHandle();
+  renderText();applyReader();refreshWords();renderPre();renderPend();renderPlay();renderGloss();bindHandle();
   const p=S.pos[L.id]||0;if(p>.02&&p<.98){requestAnimationFrame(()=>{const tw=$('.textwrap');if(tw){const top=tw.getBoundingClientRect().top+window.scrollY;window.scrollTo(0,top+(tw.offsetHeight-window.innerHeight)*p-80);}});}
 }
 function phraseWords(txt,sid){const lg=SENT_LANG[sid]||'en';return segWords(String(txt),lg).filter(t=>t.w).map(t=>lowerL(t.w,lg).replace(/’/g,"'"));}
@@ -402,7 +402,7 @@ function applyReader(){
   const s=S.settings;const sh=$('#sheet');if(sh)sh.dataset.r=s.rtheme;
   const t=$('#text');if(t){t.style.setProperty('--fs',s.fs+'px');t.style.setProperty('--lh',s.lh);
     const lg=(lessonById(cur)||{}).lang||'en';
-    t.className='hl-'+(s.flow?'none':s.hl)+' lay-'+(s.layout==='page'?'page':'sent')+(trOn()?' trs':'')+(s.rfont==='serif'?' serif':'')+(s.flow?' flow':'')+(RTL[lg]?' rtl':'')+(NOSPACE[lg]?' cjk':'');
+    t.className=(s.gl!=='off'&&!s.flow&&s.hl!=='none'?'gls ':'')+'hl-'+(s.flow?'none':s.hl)+' lay-'+(s.layout==='page'?'page':'sent')+(trOn()?' trs':'')+(s.rfont==='serif'?' serif':'')+(s.flow?' flow':'')+(RTL[lg]?' rtl':'')+(NOSPACE[lg]?' cjk':'');
     t.setAttribute('lang',lg);t.setAttribute('dir',RTL[lg]?'rtl':'ltr');}
   document.body.classList.toggle('noexpr',!s.expr);syncBars();
   $$('.dock [data-tb="trans"]').forEach(b=>{b.classList.toggle('on',!!s.trans);b.setAttribute('aria-pressed',!!s.trans);b.hidden=s.layout==='page';});
@@ -415,7 +415,7 @@ function aaModal(){
   setModal(`<div class="mhead"><h2>Texto</h2><button class="ibtn" data-close aria-label="Fechar">${I('x')}</button></div>
   <div class="aa-size"><button class="btn" data-aa="fs" data-v="-1" aria-label="Diminuir texto"><span style="font-size:14px">A</span></button><div class="aa-val"><b id="aa-fs">${s.fs}</b><span>tamanho</span></div><button class="btn" data-aa="fs" data-v="1" aria-label="Aumentar texto"><span style="font-size:22px">A</span></button></div>
   <div class="list">
-    <div class="li"><span>Letra</span>${seg('rfont',[['sans','Sistema'],['serif','Serifada']],s.rfont||'sans')}</div>
+    <div class="li"><span>Letra</span>${seg('rfont',[['serif','Lora'],['sans','Sistema']],s.rfont||'serif')}</div>
     <div class="li"><span>Linhas</span>${seg('lh',[[1.4,'Juntas'],[1.6,'Normal'],[1.9,'Afastadas']],[1.4,1.6,1.9].reduce((a,b)=>Math.abs(b-s.lh)<Math.abs(a-s.lh)?b:a))}</div>
     <div class="li"><span>Fundo</span><div class="tdots" role="group" aria-label="Fundo da página">${[['paper','Igual à app'],['sepia','Sépia'],['night','Noite']].map(k=>`<button class="t-${k[0]} ${s.rtheme===k[0]?'on':''}" data-aa="rt" data-v="${k[0]}" aria-label="${k[1]}" title="${k[1]}"></button>`).join('')}</div></div>
   </div>
@@ -423,9 +423,10 @@ function aaModal(){
     <div class="li"><span>Vista</span>${seg('layout',[['sent','Frases'],['page','Página']],s.layout==='page'?'page':'sent')}</div>
     <div class="li"><span>Cores</span>${seg('hl',[['all','Todas'],['new','Só novas'],['none','Nenhuma']],s.hl)}</div>
     <div class="li"><span>Voz</span>${seg('rate',[[.8,'0,8×'],[1,'1×'],[1.2,'1,2×']],s.rate)}</div>
+    <div class="li"><span>Glosas<small>Tradução por cima da palavra</small></span>${seg('gl',[['learn','A aprender'],['sel','Tocada'],['off','Não']],s.gl||'learn')}</div>
     ${tog('aa-ex','Sublinhar expressões',s.expr)}
   </div>
-  <div class="legend aa-leg"><span><i class="sw s0"></i>Nova</span><span><i class="sw s2"></i>A aprender</span><span><i class="sw sk"></i>Conhecida</span><span><i class="sw sx"></i>Expressão</span></div>
+  <div class="legend aa-leg"><span><i class="sw s0"></i>Nova</span><span><i class="sw s2"></i>A aprender</span><span><i class="sw sk"></i>Conhecida</span><span><i class="sw sx"></i>Expressão</span><span><i class="sw sg">glosa</i>Tradução</span></div>
   ${L&&L.imp?`<button class="btn danger wide" data-aa="del">Apagar ${(META[L.id]||{}).part?'livro':'texto'}</button>`:''}`,'Texto');
   const mc=$('#mcard');
   mc.onclick=e=>{const b=e.target.closest('[data-aa]');if(!b)return;const k=b.dataset.aa,v=b.dataset.v;
@@ -434,21 +435,28 @@ function aaModal(){
     else{s[k==='rt'?'rtheme':k]=(k==='lh'||k==='rate')?+v:v;$$(`#mcard [data-aa="${k}"]`).forEach(x=>x.classList.toggle('on',x===b));
       if(k==='rate'&&PL.on){stopPlay();PL.on=true;renderPlay();playFrom(PL.k);}
       if(k==='layout')watchTr();}
-    applyReader();save();};
+    applyReader();if(k==='gl'||k==='hl')refreshWords();save();};
   const ex=$('#aa-ex');if(ex)ex.onchange=()=>{s.expr=ex.checked;applyReader();save();};
 }
 function updateCov(){
   const L=lessonById(cur);const st=lessonStats(L);const el=$('#r-cov');if(!el)return;
   el.innerHTML=`<div class="cov-top"><span><b>${st.pct}%</b> conhecidas · ${diffLabel(st.pct)}</span><span class="tnum"><i class="dot d0"></i>${st.newTypes} novas <i class="dot d2"></i>${st.learnTypes} a aprender</span></div>${meterHTML(st)}`;
 }
+/* glosa: a tradução curta escrita por cima da palavra */
+const GLC={};
+function glossText(l){if(GLC[l]!==undefined)return GLC[l];let t='';try{const e=info(l);t=String(e&&e.pt||'').split(/[;,/(]|\s—\s/)[0].trim();}catch(e){}if(t.length>18)t=t.slice(0,17)+'…';if(t)GLC[l]=t;return t;}
+let glMode='learn';
 function refreshWords(){
-  const gs=G&&G.sid;
+  const gs=G&&G.sid;glMode=(S.settings.flow?'off':S.settings.gl)||'learn';
   $$('#text .w').forEach(w=>{
     const sid=w.dataset.s,i=+w.dataset.i,tk=TOK[sid][i];
     let sel=false;
     if(gs===sid){if(G.kind==='word'&&G.i===i)sel=true;if(G.kind==='phrase'&&i>=G.a&&i<=G.b)sel=true;}
-    const c='w st'+stc(tk.l)+(tk.x!=null?' x':'')+(sel?' sel':'')+(isPend(sid,i)?' pend':'')+(w.classList.contains('spk')?' spk':'');
+    const sc=stc(tk.l);
+    const c='w st'+sc+(tk.x!=null?' x':'')+(sel?' sel':'')+(isPend(sid,i)?' pend':'')+(w.classList.contains('spk')?' spk':'');
     if(w.className!==c)w.className=c;
+    const g=glMode!=='off'&&((glMode==='learn'&&sc>='1'&&sc<='4')||(sel&&G.kind==='word'))?glossText(tk.l):'';
+    if(g){if(w.dataset.gl!==g)w.dataset.gl=g;}else if(w.dataset.gl!==undefined)delete w.dataset.gl;
   });
   $$('#text .sent.act').forEach(x=>{if(x.id!==gs)x.classList.remove('act');});
   if(gs){const se=document.getElementById(gs);if(se)se.classList.add('act');}
